@@ -1,3 +1,5 @@
+// @ts-check
+
 const { contextBridge } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {

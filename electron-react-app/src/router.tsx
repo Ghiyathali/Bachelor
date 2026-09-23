@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import {
   Link,
   createHashHistory,
@@ -5,9 +6,8 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import App from './App.jsx'
-import { getTodos } from './api/todos.js'
+import App from './App'
+import { getTodos } from './api/todos'
 
 function HomePage() {
   const { data: todos, error, isLoading } = useQuery({
@@ -80,7 +80,6 @@ const settingsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
 
-// Hash history avoids file:// path-resolution problems in packaged Electron builds.
 export const router = createRouter({
   routeTree,
   history: createHashHistory(),
