@@ -5,7 +5,11 @@
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+    "dev": "concurrently -k -n ui,electron -c green,magenta \"npm:dev:ui\" \"npm:dev:electron\"",
+    "dev:full": "concurrently -k -n api,ui,electron -c blue,green,magenta \"npm:dev:api\" \"npm:dev:ui\" \"npm:dev:electron\"",
+    "dev:api": "dotnet run --project ../rest-server/rest-server.csproj",
+    "dev:ui": "vite",
+    "dev:electron": "wait-on tcp:5173 && electron .",
     "build": "vite build",
     "start": "electron .",
     "preview": "vite preview"
