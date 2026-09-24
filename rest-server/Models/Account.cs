@@ -9,5 +9,9 @@ public class Account
     public required string Email { get; set; }
 
     public int RoleId { get; set; }
-    public required Role Role { get; set; }
+
+    // Not "required": we create accounts by setting RoleId only.
+    // EF Core fills this property when we load it with .Include(a => a.Role).
+    // "= null!" tells the compiler: "trust me, EF will fill this in".
+    public Role Role { get; set; } = null!;
 }
