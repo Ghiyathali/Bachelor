@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RestServer.Auth;
 using RestServer.Data;
 using RestServer.Models;
 
@@ -24,12 +25,22 @@ public record RegisterRequest(
 
 public record RegisterResponse(int Id, string Username, string Email, string Role);
 
+// POST /api/auth/login body. "Identifier" = username OR email (FR-15).
+public record LoginRequest([Required] string Identifier, [Required] string Password);
+
+public record LoginResponse(string Token, DateTimeOffset ExpiresAt, string Username, string Email, string Role);
+
 [ApiController]
 [Route("api/auth")]
-public class AuthController(AppDbContext db) : ControllerBase
+public class AuthController(AppDbContext db, TokenService tokens) : ControllerBase
 {
     // Frederik's seeded role name. The requirements call it "Standard User" - align later.
     private const string DefaultRoleName = "User";
+
+    // A real bcrypt hash of a random value. Used when the account does not exist,
+    // so "unknown user" takes as long as "wrong password" - attackers can't tell them apart by timing.
+    private static readonly string DummyHash =
+        BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString(), workFactor: 12);
 
     // ---------- REGISTER ----------
     // POST /api/auth/register
@@ -75,9 +86,32 @@ public class AuthController(AppDbContext db) : ControllerBase
             new RegisterResponse(account.Id, account.Username, account.Email, defaultRole.Name));
     }
 
+    // ---------- LOGIN ----------
+    // POST /api/auth/login
+    [HttpPost("login")]
+    [AllowAnonymous]
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
+    {
+        var identifier = request.Identifier.Trim().ToLowerInvariant();
+        var isEmail = identifier.Contains('@');   // usernames can't contain '@', so this is safe
+
+        var query = db.Accounts.AsNoTracking().Include(a => a.Role);
+        var account = isEmail
+            ? await query.SingleOrDefaultAsync(a => a.Email.ToLower() == identifier)
+            : await query.SingleOrDefaultAsync(a => a.Username.ToLower() == identifier);
+
+        var passwordOk = BCrypt.Net.BCrypt.Verify(request.Password, account?.PasswordHash ?? DummyHash);
+
+        // Same answer for "no such user" and "wrong password" - never reveal which one.
+        if (account is null || !passwordOk)
+            return Unauthorized(new { message = "Invalid username/email or password." });
+
+        var (token, expiresAt) = tokens.CreateToken(account);
+        return Ok(new LoginResponse(token, expiresAt, account.Username, account.Email, account.Role.Name));
+    }
+
     // ---------- PROTECTED TEST ----------
     // GET /api/auth/me - only works with a valid token.
-    // (login is added in the next commit)
     [HttpGet("me")]
     [Authorize]
     public IActionResult Me() => Ok(new

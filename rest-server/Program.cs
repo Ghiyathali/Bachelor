@@ -62,6 +62,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Create the first Admin (Development only)
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DevSeeder.SeedFirstAdminAsync(db, app.Configuration, app.Logger);
 }
 
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)
