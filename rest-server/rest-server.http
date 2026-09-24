@@ -1,6 +1,48 @@
-@rest_server_HostAddress = http://localhost:0
+@host = http://localhost:5000
 
-GET {{rest_server_HostAddress}}/weatherforecast/
-Accept: application/json
+### ---------- REGISTER ----------
 
-###
+### 1. Register a new account -> expect 201
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "yami@pangaea.test",
+  "username": "yami",
+  "password": "Test1234!"
+}
+
+### 2. Same email again -> expect 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "yami@pangaea.test",
+  "username": "someoneelse",
+  "password": "Test1234!"
+}
+
+### 3. Same username, different letter case -> expect 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "other@pangaea.test",
+  "username": "YAMI",
+  "password": "Test1234!"
+}
+
+### 4. Invalid input (bad email, '@' in username, short password) -> expect 400
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "username": "ya@mi",
+  "password": "123"
+}
+
+### ---------- PROTECTED ----------
+
+### 5. /me WITHOUT token -> expect 401
+GET {{host}}/api/auth/me
