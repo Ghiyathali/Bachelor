@@ -8,6 +8,8 @@ import {
 } from '@tanstack/react-router'
 import App from './App'
 import { getTodos } from './api/todos'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 
 function HomePage() {
   const { data: todos, error, isLoading } = useQuery({
@@ -78,7 +80,20 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
+// Public pages
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'login',
+  component: LoginPage,
+})
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'register',
+  component: RegisterPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, loginRoute, registerRoute])
 
 export const router = createRouter({
   routeTree,
