@@ -1,6 +1,95 @@
-@rest_server_HostAddress = http://localhost:0
+@host = http://localhost:5000
 
-GET {{rest_server_HostAddress}}/weatherforecast/
-Accept: application/json
+### ---------- REGISTER ----------
 
-###
+### 1. Register a new account -> expect 201 (409 if it already exists)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "yami@pangaea.test",
+  "username": "yami",
+  "password": "Test1234!"
+}
+
+### 2. Same email again -> expect 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "yami@pangaea.test",
+  "username": "someoneelse",
+  "password": "Test1234!"
+}
+
+### 3. Same username, different letter case -> expect 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "other@pangaea.test",
+  "username": "YAMI",
+  "password": "Test1234!"
+}
+
+### 4. Invalid input (bad email, '@' in username, short password) -> expect 400
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "username": "ya@mi",
+  "password": "123"
+}
+
+### ---------- LOGIN ----------
+
+### 5. Login with USERNAME -> expect 200 + token
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "yami",
+  "password": "Test1234!"
+}
+
+### 6. Login with EMAIL, different letter case -> expect 200
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "YAMI@pangaea.test",
+  "password": "Test1234!"
+}
+
+### 7. Wrong password -> expect 401
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "yami",
+  "password": "wrong-password"
+}
+
+### 8. Unknown user -> expect 401 (same message as 7)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "nobody",
+  "password": "Test1234!"
+}
+
+### ---------- PROTECTED ----------
+
+### 9. /me WITH token from test 5 -> expect 200 and role "User"
+GET {{host}}/api/auth/me
+Authorization: Bearer {{login.response.body.token}}
+
+### 10. /me WITHOUT token -> expect 401
+GET {{host}}/api/auth/me
+
+### 11. /me with a FAKE token -> expect 401
+GET {{host}}/api/auth/me
+Authorization: Bearer abc.def.ghi

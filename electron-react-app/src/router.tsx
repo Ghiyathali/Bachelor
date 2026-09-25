@@ -5,9 +5,28 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
 } from '@tanstack/react-router'
 import App from './App'
 import { getTodos } from './api/todos'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import { isLoggedIn, useAuthStore } from './stores/authStore'
+
+// Guard for protected pages: no valid token -> go to /login.
+function requireAuth() {
+  if (!isLoggedIn()) {
+    useAuthStore.getState().logout() // clear an expired token, if any
+    throw redirect({ to: '/login' })
+  }
+}
+
+// Guard for login/register: already logged in -> go to the home page.
+function redirectIfLoggedIn() {
+  if (isLoggedIn()) {
+    throw redirect({ to: '/' })
+  }
+}
 
 function HomePage() {
   const { data: todos, error, isLoading } = useQuery({
@@ -66,19 +85,37 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFoundPage,
 })
 
+// Protected pages
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  beforeLoad: requireAuth,
   component: HomePage,
 })
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'settings',
+  beforeLoad: requireAuth,
   component: SettingsPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
+// Public pages
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'login',
+  beforeLoad: redirectIfLoggedIn,
+  component: LoginPage,
+})
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'register',
+  beforeLoad: redirectIfLoggedIn,
+  component: RegisterPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, loginRoute, registerRoute])
 
 export const router = createRouter({
   routeTree,
