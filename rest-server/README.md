@@ -35,4 +35,20 @@ dotnet run
 To use the local Docker database instead, set `ConnectionStrings__Postgres` in
 `.env` to the local connection string shown in `.env.example`.
 
-The API exposes CRUD endpoints at `/api/todos`.
+## Event feedback API
+
+All event-feedback endpoints require a JWT bearer token.
+
+- `GET /api/events?feedbackOpenOnly=true` lists events for the feedback dropdown.
+- `POST /api/events` creates an event (Admin or Event Manager).
+- `PATCH /api/events/{eventId}/feedback-status` opens or closes feedback (Admin
+  or Event Manager).
+- `POST /api/events/{eventId}/feedback` submits a 1-5 rating and optional comment.
+- `GET /api/events/{eventId}/feedback/mine` returns the current user's response.
+- `GET /api/feedback/dashboard?eventId={eventId}` returns aggregate counts, the
+  average rating, and responses (Admin or Event Manager).
+
+Each user can submit feedback once per event. Run the requests in
+`rest-server.http` from top to bottom to test the complete flow in VS Code.
+
+The original sample CRUD endpoints remain available at `/api/todos`.

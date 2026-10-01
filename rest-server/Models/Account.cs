@@ -14,4 +14,6 @@ public class Account
     // EF Core fills this property when we load it with .Include(a => a.Role).
     // "= null!" tells the compiler: "trust me, EF will fill this in".
     public Role Role { get; set; } = null!;
+
+    public ICollection<Feedback> Feedback { get; set; } = new List<Feedback>();
 }

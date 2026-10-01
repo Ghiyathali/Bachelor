@@ -8,6 +8,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Event> Events => Set<Event>();
+    public DbSet<Feedback> Feedback => Set<Feedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +37,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(account => account.Role)
                 .WithMany(role => role.Accounts)
                 .HasForeignKey(account => account.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
+            entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.ToTable(table =>
+                table.HasCheckConstraint("CK_Feedback_Rating", "\"Rating\" BETWEEN 1 AND 5"));
+            entity.Property(feedback => feedback.Comment).HasMaxLength(2000);
+            entity.HasIndex(feedback => new { feedback.EventId, feedback.AccountId }).IsUnique();
+
+            entity.HasOne(feedback => feedback.Event)
+                .WithMany(eventItem => eventItem.Feedback)
+                .HasForeignKey(feedback => feedback.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(feedback => feedback.Account)
+                .WithMany(account => account.Feedback)
+                .HasForeignKey(feedback => feedback.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

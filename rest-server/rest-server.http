@@ -1,4 +1,6 @@
 @host = http://localhost:5000
+@adminIdentifier = admin
+@adminPassword = password
 
 ### ---------- REGISTER ----------
 
@@ -93,3 +95,86 @@ GET {{host}}/api/auth/me
 ### 11. /me with a FAKE token -> expect 401
 GET {{host}}/api/auth/me
 Authorization: Bearer abc.def.ghi
+
+### ---------- EVENT FEEDBACK ----------
+
+### 12. Login as the seeded Admin -> expect 200 + token
+# Set adminPassword above to SeedAdmin__Password from your .env file.
+# @name adminLogin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{adminIdentifier}}",
+  "password": "{{adminPassword}}"
+}
+
+### 13. Admin creates an event with feedback enabled -> expect 201
+# @name createEvent
+POST {{host}}/api/events
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "name": "Pangaea Youth Workshop",
+  "startsAt": "2026-09-30T13:00:00Z",
+  "endsAt": "2026-09-30T16:00:00Z",
+  "location": "Copenhagen",
+  "isFeedbackOpen": true
+}
+
+### 14. List events available in the feedback dropdown -> expect 200
+GET {{host}}/api/events?feedbackOpenOnly=true
+Authorization: Bearer {{login.response.body.token}}
+
+### 15. User submits feedback -> expect 201
+# @name createFeedback
+POST {{host}}/api/events/{{createEvent.response.body.id}}/feedback
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "The workshop was engaging and well organised."
+}
+
+### 16. Submit feedback for the same event again -> expect 409
+POST {{host}}/api/events/{{createEvent.response.body.id}}/feedback
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "A second response should not be accepted."
+}
+
+### 17. User reads their own response -> expect 200
+GET {{host}}/api/events/{{createEvent.response.body.id}}/feedback/mine
+Authorization: Bearer {{login.response.body.token}}
+
+### 18. Admin reads dashboard totals and responses for the event -> expect 200
+GET {{host}}/api/feedback/dashboard?eventId={{createEvent.response.body.id}}
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 19. Ordinary user tries to read the dashboard -> expect 403
+GET {{host}}/api/feedback/dashboard?eventId={{createEvent.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 20. Rating outside 1-5 -> expect 400
+POST {{host}}/api/events/{{createEvent.response.body.id}}/feedback
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "rating": 6,
+  "comment": "Invalid rating test."
+}
+
+### 21. Admin closes feedback for the event -> expect 200
+PATCH {{host}}/api/events/{{createEvent.response.body.id}}/feedback-status
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "isFeedbackOpen": false
+}
