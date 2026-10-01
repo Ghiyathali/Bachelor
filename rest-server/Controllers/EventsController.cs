@@ -26,7 +26,6 @@ public record SetFeedbackStatusRequest(bool IsFeedbackOpen);
 
 [ApiController]
 [Route("api/events")]
-[Authorize]
 public class EventsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

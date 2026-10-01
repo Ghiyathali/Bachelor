@@ -37,18 +37,21 @@ To use the local Docker database instead, set `ConnectionStrings__Postgres` in
 
 ## Event feedback API
 
-All event-feedback endpoints require a JWT bearer token.
+Listing events and submitting feedback are public and anonymous. Feedback rows
+do not contain an account ID, username, email address, or other user information.
+Event management and dashboard endpoints still require a JWT bearer token.
 
 - `GET /api/events?feedbackOpenOnly=true` lists events for the feedback dropdown.
 - `POST /api/events` creates an event (Admin or Event Manager).
 - `PATCH /api/events/{eventId}/feedback-status` opens or closes feedback (Admin
   or Event Manager).
-- `POST /api/events/{eventId}/feedback` submits a 1-5 rating and optional comment.
-- `GET /api/events/{eventId}/feedback/mine` returns the current user's response.
+- `POST /api/events/{eventId}/feedback` submits overall, usefulness, and
+  inclusion ratings (1-5), plus optional worked-well, improvement, and general
+  comments.
 - `GET /api/feedback/dashboard?eventId={eventId}` returns aggregate counts, the
   average rating, and responses (Admin or Event Manager).
 
-Each user can submit feedback once per event. Run the requests in
-`rest-server.http` from top to bottom to test the complete flow in VS Code.
+Run the requests in `rest-server.http` from top to bottom to test the complete
+flow in VS Code.
 
 The original sample CRUD endpoints remain available at `/api/todos`.

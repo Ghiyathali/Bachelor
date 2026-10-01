@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using RestServer.Data;
 using RestServer.Models;
 
@@ -11,6 +9,10 @@ namespace RestServer.Controllers;
 
 public record CreateFeedbackRequest(
     [Range(1, 5)] int Rating,
+    [Range(1, 5)] int UsefulnessRating,
+    [Range(1, 5)] int InclusionRating,
+    [MaxLength(2000)] string? WhatWorkedWell,
+    [MaxLength(2000)] string? WhatCouldBeImproved,
     [MaxLength(2000)] string? Comment);
 
 public record FeedbackResponse(
@@ -18,6 +20,10 @@ public record FeedbackResponse(
     int EventId,
     string EventName,
     int Rating,
+    int? UsefulnessRating,
+    int? InclusionRating,
+    string? WhatWorkedWell,
+    string? WhatCouldBeImproved,
     string? Comment,
     DateTimeOffset CreatedAt);
 
@@ -25,21 +31,26 @@ public record DashboardFeedbackResponse(
     int Id,
     int EventId,
     string EventName,
-    int AccountId,
-    string Username,
     int Rating,
+    int? UsefulnessRating,
+    int? InclusionRating,
+    string? WhatWorkedWell,
+    string? WhatCouldBeImproved,
     string? Comment,
     DateTimeOffset CreatedAt);
 
 public record FeedbackDashboardResponse(
     int TotalResponses,
     double? AverageRating,
+    double? AverageUsefulnessRating,
+    double? AverageInclusionRating,
     IReadOnlyDictionary<int, int> RatingCounts,
+    IReadOnlyDictionary<int, int> UsefulnessRatingCounts,
+    IReadOnlyDictionary<int, int> InclusionRatingCounts,
     IReadOnlyList<DashboardFeedbackResponse> Responses);
 
 [ApiController]
 [Route("api/events/{eventId:int}/feedback")]
-[Authorize]
 public class FeedbackController(AppDbContext db) : ControllerBase
 {
     [HttpPost]
@@ -47,9 +58,6 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         int eventId,
         CreateFeedbackRequest request)
     {
-        if (!TryGetAccountId(out var accountId))
-            return Unauthorized();
-
         var eventItem = await db.Events.SingleOrDefaultAsync(item => item.Id == eventId);
         if (eventItem is null)
             return NotFound(new { message = "Event not found." });
@@ -57,66 +65,38 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         if (!eventItem.IsFeedbackOpen)
             return Conflict(new { message = "Feedback is not open for this event." });
 
-        if (await db.Feedback.AnyAsync(item => item.EventId == eventId && item.AccountId == accountId))
-            return Conflict(new { message = "You have already submitted feedback for this event." });
-
         var feedback = new Feedback
         {
             EventId = eventId,
-            AccountId = accountId,
             Rating = request.Rating,
-            Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
+            UsefulnessRating = request.UsefulnessRating,
+            InclusionRating = request.InclusionRating,
+            WhatWorkedWell = CleanComment(request.WhatWorkedWell),
+            WhatCouldBeImproved = CleanComment(request.WhatCouldBeImproved),
+            Comment = CleanComment(request.Comment),
         };
 
         db.Feedback.Add(feedback);
-        try
-        {
-            await db.SaveChangesAsync();
-        }
-        catch (DbUpdateException exception) when (
-            exception.InnerException is PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation,
-            })
-        {
-            return Conflict(new { message = "You have already submitted feedback for this event." });
-        }
+        await db.SaveChangesAsync();
 
         var response = ToResponse(feedback, eventItem.Name);
-        return CreatedAtAction(nameof(GetMine), new { eventId }, response);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
-
-    [HttpGet("mine")]
-    public async Task<ActionResult<FeedbackResponse>> GetMine(int eventId)
-    {
-        if (!TryGetAccountId(out var accountId))
-            return Unauthorized();
-
-        var feedback = await db.Feedback
-            .AsNoTracking()
-            .Where(item => item.EventId == eventId && item.AccountId == accountId)
-            .Select(item => new FeedbackResponse(
-                item.Id,
-                item.EventId,
-                item.Event.Name,
-                item.Rating,
-                item.Comment,
-                item.CreatedAt))
-            .SingleOrDefaultAsync();
-
-        return feedback is null ? NotFound() : Ok(feedback);
-    }
-
-    private bool TryGetAccountId(out int accountId) =>
-        int.TryParse(User.FindFirstValue("sub"), out accountId);
 
     private static FeedbackResponse ToResponse(Feedback feedback, string eventName) => new(
         feedback.Id,
         feedback.EventId,
         eventName,
         feedback.Rating,
+        feedback.UsefulnessRating,
+        feedback.InclusionRating,
+        feedback.WhatWorkedWell,
+        feedback.WhatCouldBeImproved,
         feedback.Comment,
         feedback.CreatedAt);
+
+    private static string? CleanComment(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 [ApiController]
@@ -140,20 +120,38 @@ public class FeedbackDashboardController(AppDbContext db) : ControllerBase
                 item.Id,
                 item.EventId,
                 item.Event.Name,
-                item.AccountId,
-                item.Account.Username,
                 item.Rating,
+                item.UsefulnessRating,
+                item.InclusionRating,
+                item.WhatWorkedWell,
+                item.WhatCouldBeImproved,
                 item.Comment,
                 item.CreatedAt))
             .ToListAsync();
 
         var ratingCounts = Enumerable.Range(1, 5)
             .ToDictionary(rating => rating, rating => responses.Count(item => item.Rating == rating));
+        var usefulnessRatingCounts = Enumerable.Range(1, 5)
+            .ToDictionary(rating => rating, rating => responses.Count(item => item.UsefulnessRating == rating));
+        var inclusionRatingCounts = Enumerable.Range(1, 5)
+            .ToDictionary(rating => rating, rating => responses.Count(item => item.InclusionRating == rating));
+        var usefulnessRatings = responses
+            .Where(item => item.UsefulnessRating.HasValue)
+            .Select(item => item.UsefulnessRating!.Value)
+            .ToList();
+        var inclusionRatings = responses
+            .Where(item => item.InclusionRating.HasValue)
+            .Select(item => item.InclusionRating!.Value)
+            .ToList();
 
         return Ok(new FeedbackDashboardResponse(
             responses.Count,
             responses.Count == 0 ? null : responses.Average(item => item.Rating),
+            usefulnessRatings.Count == 0 ? null : usefulnessRatings.Average(),
+            inclusionRatings.Count == 0 ? null : inclusionRatings.Average(),
             ratingCounts,
+            usefulnessRatingCounts,
+            inclusionRatingCounts,
             responses));
     }
 }

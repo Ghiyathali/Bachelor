@@ -49,19 +49,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Feedback>(entity =>
         {
             entity.ToTable(table =>
-                table.HasCheckConstraint("CK_Feedback_Rating", "\"Rating\" BETWEEN 1 AND 5"));
+            {
+                table.HasCheckConstraint("CK_Feedback_Rating", "\"Rating\" BETWEEN 1 AND 5");
+                table.HasCheckConstraint("CK_Feedback_UsefulnessRating", "\"UsefulnessRating\" BETWEEN 1 AND 5");
+                table.HasCheckConstraint("CK_Feedback_InclusionRating", "\"InclusionRating\" BETWEEN 1 AND 5");
+            });
             entity.Property(feedback => feedback.Comment).HasMaxLength(2000);
-            entity.HasIndex(feedback => new { feedback.EventId, feedback.AccountId }).IsUnique();
+            entity.Property(feedback => feedback.WhatWorkedWell).HasMaxLength(2000);
+            entity.Property(feedback => feedback.WhatCouldBeImproved).HasMaxLength(2000);
 
             entity.HasOne(feedback => feedback.Event)
                 .WithMany(eventItem => eventItem.Feedback)
                 .HasForeignKey(feedback => feedback.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(feedback => feedback.Account)
-                .WithMany(account => account.Feedback)
-                .HasForeignKey(feedback => feedback.AccountId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

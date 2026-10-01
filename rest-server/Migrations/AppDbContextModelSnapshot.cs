@@ -100,9 +100,6 @@ namespace RestServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccountId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Comment")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -113,19 +110,34 @@ namespace RestServer.Migrations
                     b.Property<int>("EventId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("InclusionRating")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("UsefulnessRating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WhatCouldBeImproved")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("WhatWorkedWell")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("EventId", "AccountId")
-                        .IsUnique();
+                    b.HasIndex("EventId");
 
                     b.ToTable("Feedback", t =>
                         {
+                            t.HasCheckConstraint("CK_Feedback_InclusionRating", "\"InclusionRating\" BETWEEN 1 AND 5");
+
                             t.HasCheckConstraint("CK_Feedback_Rating", "\"Rating\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_Feedback_UsefulnessRating", "\"UsefulnessRating\" BETWEEN 1 AND 5");
                         });
                 });
 
@@ -208,26 +220,13 @@ namespace RestServer.Migrations
 
             modelBuilder.Entity("RestServer.Models.Feedback", b =>
                 {
-                    b.HasOne("RestServer.Models.Account", "Account")
-                        .WithMany("Feedback")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("RestServer.Models.Event", "Event")
                         .WithMany("Feedback")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Account");
-
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("RestServer.Models.Account", b =>
-                {
-                    b.Navigation("Feedback");
                 });
 
             modelBuilder.Entity("RestServer.Models.Event", b =>
