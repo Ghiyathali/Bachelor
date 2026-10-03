@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
+import { QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 
 export default function App() {
@@ -13,7 +14,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
+      <header className="border-b border-slate-800 bg-slate-900/80 px-6 py-4 print:hidden">
         <nav className="mx-auto flex max-w-5xl items-center gap-6" aria-label="Main navigation">
           <Link to="/" className="text-lg font-semibold tracking-tight text-white">
             Electron React App
@@ -28,6 +29,16 @@ export default function App() {
               >
                 Settings
               </Link>
+              {/* FR-12: hide the QR link from roles that may not use it */}
+              {hasRole(user.role, QR_CODE_ROLES) && (
+                <Link
+                  to="/qr-code"
+                  className="text-sm font-medium text-slate-300 transition hover:text-white"
+                  activeProps={{ className: 'text-white' }}
+                >
+                  QR code
+                </Link>
+              )}
               <span className="text-sm text-slate-400">
                 {user.username} ({user.role})
               </span>

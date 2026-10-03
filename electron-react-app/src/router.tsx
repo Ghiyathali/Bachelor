@@ -9,7 +9,9 @@ import {
 } from '@tanstack/react-router'
 import App from './App'
 import { getTodos } from './api/todos'
+import { QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
 import LoginPage from './pages/LoginPage'
+import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
 import { isLoggedIn, useAuthStore } from './stores/authStore'
 
@@ -18,6 +20,16 @@ function requireAuth() {
   if (!isLoggedIn()) {
     useAuthStore.getState().logout() // clear an expired token, if any
     throw redirect({ to: '/login' })
+  }
+}
+
+// Guard for role-restricted pages: logged in, but wrong role -> go to the home page.
+function requireRole(allowed: readonly string[]) {
+  return () => {
+    requireAuth()
+    if (!currentUserHasRole(allowed)) {
+      throw redirect({ to: '/' })
+    }
   }
 }
 
@@ -100,6 +112,14 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+// FR-02 + FR-12: only Admin and Event Manager may generate the QR code
+const qrCodeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'qr-code',
+  beforeLoad: requireRole(QR_CODE_ROLES),
+  component: QrCodePage,
+})
+
 // Public pages
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -115,7 +135,13 @@ const registerRoute = createRoute({
   component: RegisterPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, loginRoute, registerRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  settingsRoute,
+  qrCodeRoute,
+  loginRoute,
+  registerRoute,
+])
 
 export const router = createRouter({
   routeTree,
