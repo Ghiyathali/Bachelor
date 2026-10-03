@@ -61,6 +61,86 @@ namespace RestServer.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("RestServer.Models.Event", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFeedbackOpen")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("RestServer.Models.Feedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("InclusionRating")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UsefulnessRating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WhatCouldBeImproved")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("WhatWorkedWell")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("Feedback", t =>
+                        {
+                            t.HasCheckConstraint("CK_Feedback_InclusionRating", "\"InclusionRating\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_Feedback_Rating", "\"Rating\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_Feedback_UsefulnessRating", "\"UsefulnessRating\" BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("RestServer.Models.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -136,6 +216,22 @@ namespace RestServer.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("RestServer.Models.Feedback", b =>
+                {
+                    b.HasOne("RestServer.Models.Event", "Event")
+                        .WithMany("Feedback")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("RestServer.Models.Event", b =>
+                {
+                    b.Navigation("Feedback");
                 });
 
             modelBuilder.Entity("RestServer.Models.Role", b =>
