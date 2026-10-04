@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using RestServer.Data;
 using RestServer.Models;
@@ -54,6 +55,7 @@ public record FeedbackDashboardResponse(
 public class FeedbackController(AppDbContext db) : ControllerBase
 {
     [HttpPost]
+    [EnableRateLimiting("feedback")] // max 20 submissions per minute per IP (see Program.cs)
     public async Task<ActionResult<FeedbackResponse>> Create(
         int eventId,
         CreateFeedbackRequest request)

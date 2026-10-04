@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;                 // NEW: FixedWindowRateLimiterOptions, RateLimitPartition
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -56,6 +57,36 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+// ---------- Rate limiting (NEW) ----------
+// The "bouncer" for the public feedback endpoint: each IP address may submit
+// PermitLimit times per window. The IP is only used as an in-memory counter key -
+// it is never stored in the database or logged.
+var feedbackPermitLimit = builder.Configuration.GetValue("FeedbackRateLimit:PermitLimit", 20);
+var feedbackWindowSeconds = builder.Configuration.GetValue("FeedbackRateLimit:WindowSeconds", 60);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("feedback", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = feedbackPermitLimit,
+                Window = TimeSpan.FromSeconds(feedbackWindowSeconds),
+                QueueLimit = 0, // over the limit -> refuse immediately, don't wait
+            }));
+
+    // Same { message } shape as our other errors, so the feedback form can show it.
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = "Too many submissions. Please wait a minute and try again." },
+            cancellationToken);
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -71,6 +102,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)
 app.UseAuthorization();  // 2. Are you ALLOWED? (checks [Authorize])
+app.UseRateLimiter();    // 3. NEW: too many requests? (checks [EnableRateLimiting])
 
 app.MapControllers();
 
