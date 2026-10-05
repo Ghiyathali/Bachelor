@@ -90,3 +90,13 @@ export function submitFeedback(
     }),
   })
 }
+
+export interface FeedbackStats {
+  responsesThisMonth: number
+  monthlyGoal: number
+}
+
+// FR-13: aggregate total for the community message (no personal data).
+export function getFeedbackStats(): Promise<FeedbackStats> {
+  return request<FeedbackStats>('/api/feedback/stats')
+}
