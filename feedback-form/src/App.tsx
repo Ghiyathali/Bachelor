@@ -5,6 +5,7 @@ import {
   getEvents,
   submitFeedback,
 } from './api'
+import { Reward } from './Reward'
 
 function formatEventDate(value: string) {
   return new Intl.DateTimeFormat('en', {
@@ -372,6 +373,7 @@ function SuccessCard({ feedback }: { feedback: FeedbackResponse }) {
           <span className="font-medium">Your rating</span>
           <span className="rounded-full bg-[#27695d] px-2.5 py-1 font-bold text-white">{feedback.rating} / 5</span>
         </div>
+        <Reward feedback={feedback} />
       </div>
     </section>
   )
