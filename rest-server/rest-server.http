@@ -153,14 +153,18 @@ Content-Type: application/json
   "comment": "Anonymous submissions are stored as separate responses."
 }
 
-### 17. Admin reads dashboard totals and anonymous responses -> expect 200
-GET {{host}}/api/feedback/dashboard?eventId={{createEvent.response.body.id}}
+### 17. Admin reads the aggregate 1-5 satisfaction distribution -> expect 200
+GET {{host}}/api/dashboard/satisfaction?eventId={{createEvent.response.body.id}}
 Authorization: Bearer {{adminLogin.response.body.token}}
 
 ### 18. Dashboard without a token -> expect 401
-GET {{host}}/api/feedback/dashboard?eventId={{createEvent.response.body.id}}
+GET {{host}}/api/dashboard/satisfaction?eventId={{createEvent.response.body.id}}
 
-### 19. Rating outside 1-5 -> expect 400
+### 19. Admin reads aggregate attendance for recent events -> expect 200
+GET {{host}}/api/dashboard/attendance?limit=10
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 20. Rating outside 1-5 -> expect 400
 POST {{host}}/api/events/{{createEvent.response.body.id}}/feedback
 Content-Type: application/json
 
@@ -173,7 +177,7 @@ Content-Type: application/json
   "comment": "Invalid rating test."
 }
 
-### 20. Admin closes feedback for the event -> expect 200
+### 21. Admin closes feedback for the event -> expect 200
 PATCH {{host}}/api/events/{{createEvent.response.body.id}}/feedback-status
 Authorization: Bearer {{adminLogin.response.body.token}}
 Content-Type: application/json

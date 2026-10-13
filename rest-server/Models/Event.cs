@@ -10,4 +10,5 @@ public class Event
     public bool IsFeedbackOpen { get; set; }
 
     public ICollection<Feedback> Feedback { get; set; } = new List<Feedback>();
+    public ICollection<EventRegistration> Registrations { get; set; } = new List<EventRegistration>();
 }

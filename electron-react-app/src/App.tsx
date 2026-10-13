@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
-import { QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 
 export default function App() {
@@ -22,9 +22,18 @@ export default function App() {
 
           {user ? (
             <>
+              {hasRole(user.role, DASHBOARD_ROLES) && (
+                <Link
+                  to="/dashboard"
+                  className="ml-auto text-sm font-medium text-slate-300 transition hover:text-white"
+                  activeProps={{ className: 'text-white' }}
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 to="/settings"
-                className="ml-auto text-sm font-medium text-slate-300 transition hover:text-white"
+                className={`${hasRole(user.role, DASHBOARD_ROLES) ? '' : 'ml-auto'} text-sm font-medium text-slate-300 transition hover:text-white`}
                 activeProps={{ className: 'text-white' }}
               >
                 Settings
@@ -62,7 +71,7 @@ export default function App() {
           )}
         </nav>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-16">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
         <Outlet />
       </main>
     </div>
