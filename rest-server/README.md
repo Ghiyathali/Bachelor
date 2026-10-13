@@ -57,6 +57,10 @@ Event management and dashboard endpoints still require a JWT bearer token.
 
 Dashboard endpoints never return individual feedback or registration rows.
 
+In Development, `SeedDashboardDemoData` creates idempotent demo registrations
+for up to six recent events so the attendance chart has representative data.
+Set it to `false` in `appsettings.Development.json` to disable this behavior.
+
 Run the requests in `rest-server.http` from top to bottom to test the complete
 flow in VS Code.
 
