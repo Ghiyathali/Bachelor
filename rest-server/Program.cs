@@ -98,6 +98,7 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DevSeeder.SeedFirstAdminAsync(db, app.Configuration, app.Logger);
+    await DevSeeder.SeedDashboardDemoDataAsync(db, app.Configuration, app.Logger);
 }
 
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)

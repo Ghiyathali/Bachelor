@@ -48,8 +48,18 @@ Event management and dashboard endpoints still require a JWT bearer token.
 - `POST /api/events/{eventId}/feedback` submits overall, usefulness, and
   inclusion ratings (1-5), plus optional worked-well, improvement, and general
   comments.
-- `GET /api/feedback/dashboard?eventId={eventId}` returns aggregate counts, the
-  average rating, and responses (Admin or Event Manager).
+- `GET /api/dashboard/satisfaction?eventId={eventId}` returns only aggregated
+  1-5 rating buckets (Admin or Event Manager).
+- `GET /api/dashboard/attendance?limit=10` returns only registered and attended
+  totals for recent events (Admin or Event Manager). A registration remains part
+  of the registered total after it is marked attended; cancelled registrations
+  are excluded.
+
+Dashboard endpoints never return individual feedback or registration rows.
+
+In Development, `SeedDashboardDemoData` creates idempotent demo registrations
+for up to six recent events so the attendance chart has representative data.
+Set it to `false` in `appsettings.Development.json` to disable this behavior.
 
 Run the requests in `rest-server.http` from top to bottom to test the complete
 flow in VS Code.

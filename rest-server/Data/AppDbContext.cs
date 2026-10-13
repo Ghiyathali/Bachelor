@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
+    public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +62,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(feedback => feedback.Event)
                 .WithMany(eventItem => eventItem.Feedback)
                 .HasForeignKey(feedback => feedback.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EventRegistration>(entity =>
+        {
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_EventRegistrations_Status",
+                "\"Status\" BETWEEN 0 AND 2"));
+
+            entity.HasIndex(registration => new { registration.EventId, registration.AccountId })
+                .IsUnique();
+
+            entity.HasOne(registration => registration.Event)
+                .WithMany(eventItem => eventItem.Registrations)
+                .HasForeignKey(registration => registration.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(registration => registration.Account)
+                .WithMany(account => account.EventRegistrations)
+                .HasForeignKey(registration => registration.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

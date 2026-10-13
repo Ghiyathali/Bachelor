@@ -92,6 +92,39 @@ namespace RestServer.Migrations
                     b.ToTable("Events");
                 });
 
+            modelBuilder.Entity("RestServer.Models.EventRegistration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("EventId", "AccountId")
+                        .IsUnique();
+
+                    b.ToTable("EventRegistrations", t =>
+                        {
+                            t.HasCheckConstraint("CK_EventRegistrations_Status", "\"Status\" BETWEEN 0 AND 2");
+                        });
+                });
+
             modelBuilder.Entity("RestServer.Models.Feedback", b =>
                 {
                     b.Property<int>("Id")
@@ -218,6 +251,25 @@ namespace RestServer.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("RestServer.Models.EventRegistration", b =>
+                {
+                    b.HasOne("RestServer.Models.Account", "Account")
+                        .WithMany("EventRegistrations")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RestServer.Models.Event", "Event")
+                        .WithMany("Registrations")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Event");
+                });
+
             modelBuilder.Entity("RestServer.Models.Feedback", b =>
                 {
                     b.HasOne("RestServer.Models.Event", "Event")
@@ -229,9 +281,16 @@ namespace RestServer.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("RestServer.Models.Account", b =>
+                {
+                    b.Navigation("EventRegistrations");
+                });
+
             modelBuilder.Entity("RestServer.Models.Event", b =>
                 {
                     b.Navigation("Feedback");
+
+                    b.Navigation("Registrations");
                 });
 
             modelBuilder.Entity("RestServer.Models.Role", b =>

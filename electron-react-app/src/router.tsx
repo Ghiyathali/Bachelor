@@ -9,7 +9,8 @@ import {
 } from '@tanstack/react-router'
 import App from './App'
 import { getTodos } from './api/todos'
-import { QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
+import { DASHBOARD_ROLES, QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
+import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
@@ -112,6 +113,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'dashboard',
+  beforeLoad: requireRole(DASHBOARD_ROLES),
+  component: DashboardPage,
+})
+
 // FR-02 + FR-12: only Admin and Event Manager may generate the QR code
 const qrCodeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -137,6 +145,7 @@ const registerRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
   settingsRoute,
   qrCodeRoute,
   loginRoute,
