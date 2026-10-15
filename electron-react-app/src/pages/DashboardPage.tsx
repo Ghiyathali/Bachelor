@@ -5,6 +5,7 @@ import {
   getSatisfactionDistribution,
 } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
+import OverviewTiles from '../components/OverviewTiles'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
 import SatisfactionDistributionChart from '../components/charts/SatisfactionDistributionChart'
 
@@ -51,6 +52,10 @@ export default function DashboardPage() {
       <p className="mt-3 max-w-2xl text-slate-300">
         Aggregated feedback and attendance across your events.
       </p>
+
+      <div className="mt-8">
+        <OverviewTiles />
+      </div>
 
       <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-2">
         <ChartCard
