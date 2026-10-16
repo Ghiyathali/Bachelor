@@ -100,9 +100,6 @@ namespace RestServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccountId")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -114,10 +111,7 @@ namespace RestServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("EventId", "AccountId")
-                        .IsUnique();
+                    b.HasIndex("EventId");
 
                     b.ToTable("EventRegistrations", t =>
                         {
@@ -253,19 +247,11 @@ namespace RestServer.Migrations
 
             modelBuilder.Entity("RestServer.Models.EventRegistration", b =>
                 {
-                    b.HasOne("RestServer.Models.Account", "Account")
-                        .WithMany("EventRegistrations")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("RestServer.Models.Event", "Event")
                         .WithMany("Registrations")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Account");
 
                     b.Navigation("Event");
                 });
@@ -279,11 +265,6 @@ namespace RestServer.Migrations
                         .IsRequired();
 
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("RestServer.Models.Account", b =>
-                {
-                    b.Navigation("EventRegistrations");
                 });
 
             modelBuilder.Entity("RestServer.Models.Event", b =>
