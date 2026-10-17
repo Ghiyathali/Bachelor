@@ -71,17 +71,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 "CK_EventRegistrations_Status",
                 "\"Status\" BETWEEN 0 AND 2"));
 
-            entity.HasIndex(registration => new { registration.EventId, registration.AccountId })
-                .IsUnique();
-
             entity.HasOne(registration => registration.Event)
                 .WithMany(eventItem => eventItem.Registrations)
                 .HasForeignKey(registration => registration.EventId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(registration => registration.Account)
-                .WithMany(account => account.EventRegistrations)
-                .HasForeignKey(registration => registration.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
