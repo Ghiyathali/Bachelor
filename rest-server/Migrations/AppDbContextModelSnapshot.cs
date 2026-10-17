@@ -100,11 +100,33 @@ namespace RestServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AgeBand")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("AttendedBefore")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("EventId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("HeardAbout")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Nationality")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -115,6 +137,8 @@ namespace RestServer.Migrations
 
                     b.ToTable("EventRegistrations", t =>
                         {
+                            t.HasCheckConstraint("CK_EventRegistrations_AgeBand", "\"AgeBand\" IS NULL OR \"AgeBand\" BETWEEN 0 AND 3");
+
                             t.HasCheckConstraint("CK_EventRegistrations_Status", "\"Status\" BETWEEN 0 AND 3");
                         });
                 });

@@ -67,9 +67,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<EventRegistration>(entity =>
         {
-            entity.ToTable(table => table.HasCheckConstraint(
-                "CK_EventRegistrations_Status",
-                "\"Status\" BETWEEN 0 AND 3"));
+            entity.ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_EventRegistrations_Status",
+                    "\"Status\" BETWEEN 0 AND 3");
+                table.HasCheckConstraint(
+                    "CK_EventRegistrations_AgeBand",
+                    "\"AgeBand\" IS NULL OR \"AgeBand\" BETWEEN 0 AND 3");
+            });
+
+            entity.Property(registration => registration.City).HasMaxLength(100);
+            entity.Property(registration => registration.Nationality).HasMaxLength(100);
+            entity.Property(registration => registration.Gender).HasMaxLength(50);
+            entity.Property(registration => registration.HeardAbout).HasMaxLength(100);
 
             entity.HasOne(registration => registration.Event)
                 .WithMany(eventItem => eventItem.Registrations)

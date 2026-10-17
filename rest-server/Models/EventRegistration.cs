@@ -10,12 +10,33 @@ public enum RegistrationStatus
     Rejected = 3,  // did not get a spot
 }
 
+// We store an age RANGE, never the exact age (GDPR / NFR-02: data minimisation).
+// Pangaea stores the exact age; it is converted to a band when imported.
+public enum AgeBand
+{
+    Under18 = 0,     // < 18
+    From18To24 = 1,  // 18-24
+    From25To30 = 2,  // 25-30
+    Over30 = 3,      // 31 and older
+}
+
+// One anonymous sign-up for an event. No name, email or account - only
+// the demographic answers needed for the dashboard (FR-03).
+// All demographic fields are optional: older rows and people who skip a
+// question simply have no value.
 public class EventRegistration
 {
     public int Id { get; set; }
     public int EventId { get; set; }
     public RegistrationStatus Status { get; set; } = RegistrationStatus.Pending;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public string? City { get; set; }
+    public AgeBand? AgeBand { get; set; }
+    public string? Nationality { get; set; }
+    public string? Gender { get; set; }
+    public bool? AttendedBefore { get; set; }   // returning participant?
+    public string? HeardAbout { get; set; }     // promotion channel
 
     public Event Event { get; set; } = null!;
 }
