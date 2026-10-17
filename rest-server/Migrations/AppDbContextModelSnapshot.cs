@@ -115,7 +115,7 @@ namespace RestServer.Migrations
 
                     b.ToTable("EventRegistrations", t =>
                         {
-                            t.HasCheckConstraint("CK_EventRegistrations_Status", "\"Status\" BETWEEN 0 AND 2");
+                            t.HasCheckConstraint("CK_EventRegistrations_Status", "\"Status\" BETWEEN 0 AND 3");
                         });
                 });
 

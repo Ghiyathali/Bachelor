@@ -77,16 +77,22 @@ public static class DevSeeder
                 continue;
 
             var registeredCount = 8 + eventIndex;
-            var attendedCount = Math.Max(1, registeredCount - 2 - eventIndex % 3);
+            var acceptedCount = Math.Max(1, registeredCount - 2 - eventIndex % 3);
 
             for (var attendeeIndex = 0; attendeeIndex < registeredCount; attendeeIndex++)
             {
                 db.EventRegistrations.Add(new EventRegistration
                 {
                     EventId = eventItem.Id,
-                    Status = attendeeIndex < attendedCount
-                        ? RegistrationStatus.Attended
-                        : RegistrationStatus.Registered,
+                    // Most get a spot; the rest are spread over the other PYN statuses.
+                    Status = attendeeIndex < acceptedCount
+                        ? RegistrationStatus.Accepted
+                        : (attendeeIndex % 3) switch
+                        {
+                            0 => RegistrationStatus.Waiting,
+                            1 => RegistrationStatus.Rejected,
+                            _ => RegistrationStatus.Pending,
+                        },
                 });
                 added++;
             }

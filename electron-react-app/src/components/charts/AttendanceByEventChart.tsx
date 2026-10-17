@@ -2,8 +2,8 @@ import type { AttendanceByEvent } from '../../api/dashboard'
 import ResponsiveBarChart from './ResponsiveBarChart'
 
 const series = [
-  { key: 'registered', label: 'Registered', color: '#38bdf8' },
-  { key: 'attended', label: 'Attended', color: '#34d399' },
+  { key: 'signedUp', label: 'Signed up', color: '#38bdf8' },
+  { key: 'accepted', label: 'Accepted', color: '#34d399' },
 ]
 
 function shorten(value: string) {
@@ -18,8 +18,8 @@ export default function AttendanceByEventChart({ data }: { data: AttendanceByEve
         label: shorten(event.eventName),
         description: event.eventName,
         values: {
-          registered: event.registeredCount,
-          attended: event.attendedCount,
+          signedUp: event.signedUpCount,
+          accepted: event.acceptedCount,
         },
       }))}
       series={series}

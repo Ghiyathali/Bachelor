@@ -14,8 +14,8 @@ export interface EventAttendance {
   eventId: number
   eventName: string
   startsAt: string
-  registeredCount: number
-  attendedCount: number
+  signedUpCount: number
+  acceptedCount: number
 }
 
 export interface AttendanceByEvent {
@@ -28,7 +28,7 @@ export interface DashboardOverview {
   totalParticipants: number
   averageSatisfaction: number | null
   feedbackResponses: number
-  attendanceRate: number | null
+  acceptanceRate: number | null
 }
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {

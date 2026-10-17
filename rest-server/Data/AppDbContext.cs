@@ -69,7 +69,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_EventRegistrations_Status",
-                "\"Status\" BETWEEN 0 AND 2"));
+                "\"Status\" BETWEEN 0 AND 3"));
 
             entity.HasOne(registration => registration.Event)
                 .WithMany(eventItem => eventItem.Registrations)

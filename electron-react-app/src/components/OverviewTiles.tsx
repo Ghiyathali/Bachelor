@@ -28,8 +28,8 @@ export default function OverviewTiles() {
     },
     { label: 'Feedback responses', value: data?.feedbackResponses },
     {
-      label: 'Attendance rate',
-      value: data && (data.attendanceRate === null ? null : `${data.attendanceRate.toFixed(1)} %`),
+      label: 'Acceptance rate',
+      value: data && (data.acceptanceRate === null ? null : `${data.acceptanceRate.toFixed(1)} %`),
     },
   ]
 
