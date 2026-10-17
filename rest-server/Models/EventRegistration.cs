@@ -38,5 +38,10 @@ public class EventRegistration
     public bool? AttendedBefore { get; set; }   // returning participant?
     public string? HeardAbout { get; set; }     // promotion channel
 
+    // Erasmus+ "fewer opportunities" (economic, social, geographic or health barriers).
+    // Sensitive: only a yes/no, never the reason. Only shown as totals, and groups
+    // smaller than 5 people must be hidden so nobody can be recognised.
+    public bool? FewerOpportunities { get; set; }
+
     public Event Event { get; set; } = null!;
 }

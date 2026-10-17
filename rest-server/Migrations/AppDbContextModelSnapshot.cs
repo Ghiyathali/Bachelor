@@ -116,6 +116,9 @@ namespace RestServer.Migrations
                     b.Property<int>("EventId")
                         .HasColumnType("integer");
 
+                    b.Property<bool?>("FewerOpportunities")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Gender")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");

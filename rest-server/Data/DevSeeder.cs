@@ -114,7 +114,15 @@ public static class DevSeeder
         foreach (var registration in withoutDemographics)
             ApplyMockDemographics(registration, random);
 
-        if (added == 0 && withoutDemographics.Count == 0)
+        // Rows filled before FewerOpportunities existed only miss that one answer.
+        var withoutFewerOpportunities = await db.EventRegistrations
+            .Where(registration => eventIds.Contains(registration.EventId)
+                && registration.FewerOpportunities == null)
+            .ToListAsync();
+        foreach (var registration in withoutFewerOpportunities)
+            registration.FewerOpportunities = random.Next(100) < 30;
+
+        if (added == 0 && withoutDemographics.Count == 0 && withoutFewerOpportunities.Count == 0)
             return;
 
         await db.SaveChangesAsync();
@@ -145,5 +153,6 @@ public static class DevSeeder
         registration.Gender = MockGenders[random.Next(MockGenders.Length)];
         registration.AttendedBefore = random.Next(100) < 40;   // about 40 % returning
         registration.HeardAbout = MockHeardAbout[random.Next(MockHeardAbout.Length)];
+        registration.FewerOpportunities = random.Next(100) < 30;   // about 30 %
     }
 }
