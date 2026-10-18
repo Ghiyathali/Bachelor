@@ -73,8 +73,8 @@ export default function DashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Attendance per event"
-          description="Registered people compared with checked-in attendees"
+          title="Sign-ups per event"
+          description="Everyone who signed up compared with those who got a spot"
         >
           {attendance.isLoading && <ChartMessage>Loading attendance data…</ChartMessage>}
           {attendance.error && <ChartMessage error>{getErrorMessage(attendance.error)}</ChartMessage>}
@@ -84,8 +84,8 @@ export default function DashboardPage() {
           {attendance.data && attendance.data.events.length > 0 && (
             <>
               <div className="mb-1 flex flex-wrap justify-end gap-4 text-xs text-slate-300">
-                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-sky-400" />Registered</span>
-                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-400" />Attended</span>
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-sky-400" />Signed up</span>
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-400" />Accepted</span>
               </div>
               <AttendanceByEventChart data={attendance.data} />
             </>

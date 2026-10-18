@@ -69,6 +69,9 @@ public static class DevSeeder
             .Distinct()
             .ToHashSetAsync();
 
+        // Fixed seed: every teammate gets the same mock answers.
+        var random = new Random(19);
+
         var added = 0;
         for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
         {
@@ -77,25 +80,79 @@ public static class DevSeeder
                 continue;
 
             var registeredCount = 8 + eventIndex;
-            var attendedCount = Math.Max(1, registeredCount - 2 - eventIndex % 3);
+            var acceptedCount = Math.Max(1, registeredCount - 2 - eventIndex % 3);
 
             for (var attendeeIndex = 0; attendeeIndex < registeredCount; attendeeIndex++)
             {
-                db.EventRegistrations.Add(new EventRegistration
+                var registration = new EventRegistration
                 {
                     EventId = eventItem.Id,
-                    Status = attendeeIndex < attendedCount
-                        ? RegistrationStatus.Attended
-                        : RegistrationStatus.Registered,
-                });
+                    // Most get a spot; the rest are spread over the other PYN statuses.
+                    Status = attendeeIndex < acceptedCount
+                        ? RegistrationStatus.Accepted
+                        : (attendeeIndex % 3) switch
+                        {
+                            0 => RegistrationStatus.Waiting,
+                            1 => RegistrationStatus.Rejected,
+                            _ => RegistrationStatus.Pending,
+                        },
+                };
+                ApplyMockDemographics(registration, random);
+                db.EventRegistrations.Add(registration);
                 added++;
             }
         }
 
-        if (added == 0)
+        // Demo sign-ups created before the demographic fields existed get mock answers too,
+        // so the dashboard has something to show. Only touches rows with no answers at all.
+        var withoutDemographics = await db.EventRegistrations
+            .Where(registration => eventIds.Contains(registration.EventId)
+                && registration.AgeBand == null
+                && registration.City == null
+                && registration.HeardAbout == null)
+            .ToListAsync();
+        foreach (var registration in withoutDemographics)
+            ApplyMockDemographics(registration, random);
+
+        // Rows filled before FewerOpportunities existed only miss that one answer.
+        var withoutFewerOpportunities = await db.EventRegistrations
+            .Where(registration => eventIds.Contains(registration.EventId)
+                && registration.FewerOpportunities == null)
+            .ToListAsync();
+        foreach (var registration in withoutFewerOpportunities)
+            registration.FewerOpportunities = random.Next(100) < 30;
+
+        if (added == 0 && withoutDemographics.Count == 0 && withoutFewerOpportunities.Count == 0)
             return;
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Created {Count} development dashboard demo registrations.", added);
+        logger.LogInformation(
+            "Created {Added} development dashboard demo registrations and filled demographics on {Filled} existing ones.",
+            added, withoutDemographics.Count);
+    }
+
+    // Mock answers only - NOT real Pangaea data. Values repeat in the arrays
+    // so some answers are more common, like in a real sign-up list.
+    private static readonly string[] MockCities =
+        ["Copenhagen", "Copenhagen", "Copenhagen", "Aarhus", "Aarhus", "Odense", "Aalborg", "Horsens"];
+    private static readonly AgeBand[] MockAgeBands =
+        [AgeBand.Under18, AgeBand.From18To24, AgeBand.From18To24, AgeBand.From18To24,
+         AgeBand.From25To30, AgeBand.From25To30, AgeBand.Over30];
+    private static readonly string[] MockNationalities =
+        ["Danish", "Danish", "Danish", "Syrian", "Ukrainian", "Afghan", "Eritrean", "Iranian", "Somali"];
+    private static readonly string[] MockGenders =
+        ["Female", "Female", "Male", "Male", "Non-binary", "Prefer not to say"];
+    private static readonly string[] MockHeardAbout =
+        ["Instagram", "Instagram", "Friend", "Friend", "Facebook", "School", "Partner organisation", "Website"];
+
+    private static void ApplyMockDemographics(EventRegistration registration, Random random)
+    {
+        registration.City = MockCities[random.Next(MockCities.Length)];
+        registration.AgeBand = MockAgeBands[random.Next(MockAgeBands.Length)];
+        registration.Nationality = MockNationalities[random.Next(MockNationalities.Length)];
+        registration.Gender = MockGenders[random.Next(MockGenders.Length)];
+        registration.AttendedBefore = random.Next(100) < 40;   // about 40 % returning
+        registration.HeardAbout = MockHeardAbout[random.Next(MockHeardAbout.Length)];
+        registration.FewerOpportunities = random.Next(100) < 30;   // about 30 %
     }
 }

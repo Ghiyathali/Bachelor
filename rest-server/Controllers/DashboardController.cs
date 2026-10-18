@@ -10,23 +10,24 @@ namespace RestServer.Controllers;
 public record RatingBucket(int Rating, int Count);
 public record SatisfactionDistributionResponse(int TotalResponses, IReadOnlyList<RatingBucket> Ratings);
 
+// Per event: everyone who signed up, and how many of them got a spot (Accepted).
 public record EventAttendance(
     int EventId,
     string EventName,
     DateTimeOffset StartsAt,
-    int RegisteredCount,
-    int AttendedCount);
+    int SignedUpCount,
+    int AcceptedCount);
 
 public record AttendanceByEventResponse(IReadOnlyList<EventAttendance> Events);
 
 // FR-04: the key metrics shown as tiles at the top of the dashboard.
-// AverageSatisfaction and AttendanceRate are null when there is no data to average.
+// AverageSatisfaction and AcceptanceRate are null when there is no data to average.
 public record OverviewResponse(
     int TotalEvents,
     int TotalParticipants,
     double? AverageSatisfaction,
     int FeedbackResponses,
-    double? AttendanceRate);
+    double? AcceptanceRate);
 
 [ApiController]
 [Route("api/dashboard")]
@@ -42,19 +43,18 @@ public class DashboardController(AppDbContext db) : ControllerBase
         var feedbackResponses = await db.Feedback.CountAsync();
         var averageRating = await db.Feedback.AverageAsync(item => (double?)item.Rating);
 
-        // Participants = people who actually attended (FR-04 "attendees").
-        // Registered = everyone who signed up and did not cancel (attended ones included).
-        var attended = await db.EventRegistrations
-            .CountAsync(registration => registration.Status == RegistrationStatus.Attended);
-        var registered = await db.EventRegistrations
-            .CountAsync(registration => registration.Status != RegistrationStatus.Cancelled);
+        // Participants = sign-ups with status Accepted (got a spot at the event).
+        // Pangaea's sign-up data has no "attended" status, so Accepted is the closest measure.
+        var accepted = await db.EventRegistrations
+            .CountAsync(registration => registration.Status == RegistrationStatus.Accepted);
+        var signedUp = await db.EventRegistrations.CountAsync();
 
         return Ok(new OverviewResponse(
             totalEvents,
-            attended,
+            accepted,
             averageRating is null ? null : Math.Round(averageRating.Value, 1),
             feedbackResponses,
-            registered == 0 ? null : Math.Round(100.0 * attended / registered, 1)));
+            signedUp == 0 ? null : Math.Round(100.0 * accepted / signedUp, 1)));
     }
 
     [HttpGet("satisfaction")]
@@ -86,7 +86,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
         [FromQuery, Range(1, 50)] int limit = 10)
     {
         // Select the most recent events, but return them chronologically for the chart.
-        // Registered is the non-cancelled population; attended is its checked-in subset.
+        // SignedUp = every sign-up for the event; Accepted = the ones who got a spot.
         var events = await db.Events
             .AsNoTracking()
             .OrderByDescending(eventItem => eventItem.StartsAt)
@@ -95,10 +95,9 @@ public class DashboardController(AppDbContext db) : ControllerBase
                 eventItem.Id,
                 eventItem.Name,
                 eventItem.StartsAt,
+                eventItem.Registrations.Count(),
                 eventItem.Registrations.Count(registration =>
-                    registration.Status != RegistrationStatus.Cancelled),
-                eventItem.Registrations.Count(registration =>
-                    registration.Status == RegistrationStatus.Attended)))
+                    registration.Status == RegistrationStatus.Accepted)))
             .ToListAsync();
 
         events.Reverse();
