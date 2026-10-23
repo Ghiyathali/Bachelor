@@ -11,8 +11,10 @@ export default defineConfig({
       // Keep renderer requests same-origin during development. Vite forwards them
       // to the ASP.NET server, avoiding a development-only CORS requirement.
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://localhost:5001',
         changeOrigin: true,
+        // Only this local development proxy accepts the self-signed .NET certificate.
+        secure: false,
       },
     },
   },

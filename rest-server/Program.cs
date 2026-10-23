@@ -101,6 +101,8 @@ if (app.Environment.IsDevelopment())
     await DevSeeder.SeedDashboardDemoDataAsync(db, app.Configuration, app.Logger);
 }
 
+app.UseHttpsRedirection();
+
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)
 app.UseAuthorization();  // 2. Are you ALLOWED? (checks [Authorize])
 app.UseRateLimiter();    // 3. NEW: too many requests? (checks [EnableRateLimiting])
