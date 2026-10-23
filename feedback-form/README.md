@@ -9,6 +9,7 @@ Start the PostgreSQL database and REST server first:
 
 ```bash
 cd ../rest-server
+dotnet dev-certs https --trust
 dotnet tool run dotnet-ef database update
 dotnet run
 ```
@@ -22,7 +23,8 @@ npm run dev
 ```
 
 Open <http://localhost:5174>. Vite proxies `/api` requests to
-`http://localhost:5000` during development.
+`https://localhost:5001` during development. The local Vite proxy accepts the
+self-signed .NET development certificate; the form itself still runs over HTTP.
 
 For a separately hosted API, create `.env.local` containing:
 

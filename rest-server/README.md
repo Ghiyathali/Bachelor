@@ -26,11 +26,24 @@ docker compose up -d
 
 ## Create the schema and run the API
 
+Trust the localhost development certificate once (macOS may ask for your password):
+
+```bash
+dotnet dev-certs https --trust
+```
+
+Then run:
+
 ```bash
 dotnet tool restore
 dotnet tool run dotnet-ef database update
 dotnet run
 ```
+
+The API listens at `https://localhost:5001`. Requests to `http://localhost:5002`
+redirect to HTTPS. Both frontend development proxies connect to port 5001 and
+accept the self-signed development certificate only for their local API target.
+The frontend development pages themselves still use HTTP.
 
 To use the local Docker database instead, set `ConnectionStrings__Postgres` in
 `.env` to the local connection string shown in `.env.example`.

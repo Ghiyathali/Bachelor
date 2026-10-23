@@ -7,7 +7,12 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/api': 'http://localhost:5000',
+      '/api': {
+        target: 'https://localhost:5001',
+        changeOrigin: true,
+        // Only this local development proxy accepts the self-signed .NET certificate.
+        secure: false,
+      },
     },
   },
 })

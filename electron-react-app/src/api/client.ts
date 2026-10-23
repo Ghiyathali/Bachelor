@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '../stores/authStore'
 
 // ONE shared axios instance for the whole app.
-// In development VITE_API_URL is empty, so '/api/...' goes through the Vite proxy to localhost:5000.
+// In development VITE_API_URL is empty, so '/api/...' goes through the Vite proxy to https://localhost:5001.
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '',
 })
