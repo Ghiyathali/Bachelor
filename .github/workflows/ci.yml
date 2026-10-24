@@ -10,11 +10,8 @@ permissions:
 
 jobs:
   backend:
-    name: Backend (ASP.NET)
+    name: Backend (ASP.NET + tests)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rest-server
     steps:
       - uses: actions/checkout@v5
 
@@ -22,11 +19,17 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # The solution contains rest-server and rest-server.Tests.
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore Pangaea.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Pangaea.slnx --no-restore --configuration Release
+
+      # Integration tests start their own PostgreSQL in Docker (Testcontainers);
+      # Docker is already available on GitHub's ubuntu runners.
+      - name: Test
+        run: dotnet test Pangaea.slnx --no-build --configuration Release
 
   frontend:
     name: Frontend (Electron + React)
@@ -51,5 +54,27 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
+      - name: Build
+        run: npm run build
+
+  feedback-form:
+    name: Feedback form (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: feedback-form
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: feedback-form/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # "build" runs tsc --noEmit (type-check) and then vite build.
       - name: Build
         run: npm run build

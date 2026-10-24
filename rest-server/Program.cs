@@ -110,3 +110,6 @@ app.UseRateLimiter();    // 3. NEW: too many requests? (checks [EnableRateLimiti
 app.MapControllers();
 
 app.Run();
+
+// Makes the auto-generated Program class visible to rest-server.Tests (WebApplicationFactory<Program>).
+public partial class Program { }
