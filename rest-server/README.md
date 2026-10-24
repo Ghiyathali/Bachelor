@@ -70,9 +70,17 @@ Event management and dashboard endpoints still require a JWT bearer token.
 
 Dashboard endpoints never return individual feedback or registration rows.
 
-In Development, `SeedDashboardDemoData` creates idempotent demo registrations
-for up to six recent events so the attendance chart has representative data.
-Set it to `false` in `appsettings.Development.json` to disable this behavior.
+Demo data seeding is off by default, including in Development. To opt in, set
+the following in `rest-server/.env` (or as an environment variable):
+
+```dotenv
+SeedDemoData=true
+```
+
+In Development, this creates demo sign-ups for up to six recent events and fills
+missing demographics with mock answers. Leave it unset or set to `false` when
+using the shared Azure database to keep startup from changing demo data and
+dashboard numbers. First-admin creation is configured separately by `SeedAdmin`.
 
 Run the requests in `rest-server.http` from top to bottom to test the complete
 flow in VS Code.

@@ -48,7 +48,7 @@ public static class DevSeeder
         IConfiguration config,
         ILogger logger)
     {
-        if (!config.GetValue("SeedDashboardDemoData", false))
+        if (!config.GetValue("SeedDemoData", false))
             return;
 
         var events = await db.Events
