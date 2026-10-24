@@ -244,6 +244,23 @@ function FeedbackForm() {
 
       {error && <ErrorMessage message={error} />}
 
+      <section
+        aria-labelledby="privacy-notice-title"
+        className="rounded-2xl border border-[#deddd6] bg-[#eef4f1] px-6 py-5 text-sm leading-6 text-[#3f514b] sm:px-8"
+      >
+        <h2 id="privacy-notice-title" className="font-semibold text-[#263d36]">Your privacy</h2>
+        <p className="mt-2">
+          We collect your selected event, three ratings, any written feedback, and the submission time
+          to improve Pangaea Youth events and measure community feedback progress. Your feedback is
+          anonymous: no name, email, or account is attached. Please leave names and other identifying
+          details out of your comments.
+        </p>
+        <p className="mt-2">
+          The server uses your IP address in memory to limit repeat submissions; it is not saved with
+          your feedback. For privacy questions, contact the Pangaea Youth event organiser.
+        </p>
+      </section>
+
       <div className="flex items-center justify-between px-1 pt-2">
         <button
           type="submit"
