@@ -1,7 +1,10 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using RestServer.Data;
+using RestServer.Models;
 using Testcontainers.PostgreSql;
 
 namespace RestServer.Tests;
@@ -11,6 +14,11 @@ namespace RestServer.Tests;
 // and deleted after the last one, so the shared Azure database is never touched.
 public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    // The one Admin that exists in the test database (only creating accounts needs it).
+    public const string AdminUsername = "testadmin";
+    public const string AdminEmail = "testadmin@test.example";
+    public const string AdminPassword = "AdminPassword1";
+
     // Same PostgreSQL version as the team's docker-compose.yml.
     private readonly PostgreSqlContainer _database = new PostgreSqlBuilder("postgres:17-alpine").Build();
 
@@ -29,6 +37,19 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             .Options;
         await using var db = new AppDbContext(options);
         await db.Database.MigrateAsync();
+
+        // Only an Admin may create accounts (#52), so the test database needs one Admin
+        // to start with - written directly to the database, like DevSeeder does in Development.
+        // workFactor 4 = fastest bcrypt setting; fine for a throwaway test database.
+        var adminRole = await db.Roles.SingleAsync(role => role.Name == "Admin");
+        db.Accounts.Add(new Account
+        {
+            Username = AdminUsername,
+            Email = AdminEmail,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(AdminPassword, workFactor: 4),
+            RoleId = adminRole.Id,
+        });
+        await db.SaveChangesAsync();
     }
 
     // "Testing" instead of "Development": no dev seeding of admins or demo data.
@@ -38,6 +59,24 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     // HTTPS base address, because Program.cs redirects plain HTTP to HTTPS (NFR-01).
     public HttpClient CreateHttpsClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+
+    // Logs in and returns a client that sends "Authorization: Bearer <token>" on every request.
+    public async Task<HttpClient> CreateLoggedInClientAsync(string identifier, string password)
+    {
+        var client = CreateHttpsClient();
+
+        var response = await client.PostAsJsonAsync("/api/auth/login", new { identifier, password });
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<TokenBody>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body!.Token);
+        return client;
+    }
+
+    public Task<HttpClient> CreateAdminClientAsync() =>
+        CreateLoggedInClientAsync(AdminUsername, AdminPassword);
+
+    private record TokenBody(string Token);
 
     async Task IAsyncLifetime.DisposeAsync()
     {

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link } from '@tanstack/react-router'
 import { register as registerAccount } from '../api/auth'
 import { getErrorMessage } from '../api/client'
 
@@ -31,6 +30,8 @@ type RegisterForm = z.infer<typeof registerSchema>
 
 const inputClass = 'mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-white'
 
+// Admin only (#52): an Admin creates an account for a PYN staff member.
+// The route is protected in router.tsx; the backend also rejects non-Admins (401/403).
 export default function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [createdUsername, setCreatedUsername] = useState<string | null>(null)
@@ -38,6 +39,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(registerSchema) })
 
@@ -56,38 +58,49 @@ export default function RegisterPage() {
     }
   }
 
+  // Clear the form so the Admin can create the next account.
+  function createAnother() {
+    reset()
+    setCreatedUsername(null)
+  }
+
   // Success screen (FR-14: "a confirmation is shown and the user can sign in")
   if (createdUsername) {
     return (
       <section className="mx-auto max-w-sm">
         <h1 className="text-3xl font-bold text-white">Account created</h1>
         <p className="mt-4 text-slate-300">
-          Welcome, <span className="font-semibold text-white">{createdUsername}</span>! You can now log in.
+          <span className="font-semibold text-white">{createdUsername}</span> can now log in with the
+          password you set. Share it with them securely.
         </p>
-        <Link
-          to="/login"
+        <button
+          type="button"
+          onClick={createAnother}
           className="mt-6 inline-block rounded-md bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500"
         >
-          Go to login
-        </Link>
+          Create another account
+        </button>
       </section>
     )
   }
 
   return (
     <section className="mx-auto max-w-sm">
-      <h1 className="text-3xl font-bold text-white">Register</h1>
+      <h1 className="text-3xl font-bold text-white">Create account</h1>
+      <p className="mt-2 text-sm text-slate-400">
+        Create a login for a PYN staff member. New accounts get the User role.
+      </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email</label>
-          <input id="email" type="email" autoComplete="email" {...register('email')} className={inputClass} />
+          <input id="email" type="email" autoComplete="off" {...register('email')} className={inputClass} />
           {errors.email && <p className="mt-1 text-sm text-rose-300">{errors.email.message}</p>}
         </div>
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-slate-300">Username</label>
-          <input id="username" autoComplete="username" {...register('username')} className={inputClass} />
+          <input id="username" autoComplete="off" {...register('username')} className={inputClass} />
           {errors.username && <p className="mt-1 text-sm text-rose-300">{errors.username.message}</p>}
         </div>
 
@@ -113,11 +126,6 @@ export default function RegisterPage() {
           {isSubmitting ? 'Creating account…' : 'Create account'}
         </button>
       </form>
-
-      <p className="mt-6 text-sm text-slate-400">
-        Already have an account?{' '}
-        <Link to="/login" className="font-medium text-sky-400 hover:text-sky-300">Log in</Link>
-      </p>
     </section>
   )
 }

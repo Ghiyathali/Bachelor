@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-router'
 import App from './App'
 import { getTodos } from './api/todos'
-import { DASHBOARD_ROLES, QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import QrCodePage from './pages/QrCodePage'
@@ -34,7 +34,7 @@ function requireRole(allowed: readonly string[]) {
   }
 }
 
-// Guard for login/register: already logged in -> go to the home page.
+// Guard for the login page: already logged in -> go to the home page.
 function redirectIfLoggedIn() {
   if (isLoggedIn()) {
     throw redirect({ to: '/' })
@@ -136,10 +136,11 @@ const loginRoute = createRoute({
   component: LoginPage,
 })
 
+// #52: creating accounts is Admin only (no public self-registration)
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'register',
-  beforeLoad: redirectIfLoggedIn,
+  beforeLoad: requireRole(ACCOUNT_ADMIN_ROLES),
   component: RegisterPage,
 })
 

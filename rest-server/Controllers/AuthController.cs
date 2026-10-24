@@ -42,10 +42,13 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
     private static readonly string DummyHash =
         BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString(), workFactor: 12);
 
-    // ---------- REGISTER ----------
+    // ---------- CREATE ACCOUNT (Admin only) ----------
     // POST /api/auth/register
+    // Only a logged-in Admin may create accounts (#52). The app is for PYN staff only,
+    // and the API is reachable from the internet, so self-registration would let
+    // anyone create an account. No token -> 401, token without the Admin role -> 403.
     [HttpPost("register")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request)
     {
         // Store in lower-case so "Yami" and "yami" are the same account.
@@ -58,7 +61,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
         if (await db.Accounts.AnyAsync(a => a.Username.ToLower() == username))
             return Conflict(new { message = "This username is already taken." });
 
-        // Every new account gets the lowest role. The user cannot choose it.
+        // Every new account gets the lowest role. Choosing a role is part of #32.
         var defaultRole = await db.Roles.SingleAsync(r => r.Name == DefaultRoleName);
 
         var account = new Account
@@ -76,7 +79,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
         }
         catch (DbUpdateException)
         {
-            // Two people registered the same name at the exact same moment:
+            // Two accounts with the same name created at the exact same moment:
             // the database's unique index stops the second one.
             return Conflict(new { message = "Email or username is already taken." });
         }
