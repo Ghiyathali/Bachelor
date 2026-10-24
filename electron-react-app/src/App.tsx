@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
-import { DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 
 export default function App() {
@@ -41,6 +41,16 @@ export default function App() {
                   QR code
                 </Link>
               )}
+              {/* #52: only Admins create accounts */}
+              {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && (
+                <Link
+                  to="/register"
+                  className="text-sm font-medium text-slate-300 transition hover:text-white"
+                  activeProps={{ className: 'text-white' }}
+                >
+                  Create account
+                </Link>
+              )}
               <Link
                 to="/settings"
                 className={`${hasRole(user.role, DASHBOARD_ROLES) ? '' : 'ml-auto'} text-sm font-medium text-slate-300 transition hover:text-white`}
@@ -60,14 +70,9 @@ export default function App() {
               </button>
             </>
           ) : (
-            <>
-              <Link to="/login" className="ml-auto text-sm font-medium text-slate-300 hover:text-white">
-                Log in
-              </Link>
-              <Link to="/register" className="text-sm font-medium text-slate-300 hover:text-white">
-                Register
-              </Link>
-            </>
+            <Link to="/login" className="ml-auto text-sm font-medium text-slate-300 hover:text-white">
+              Log in
+            </Link>
           )}
         </nav>
       </header>

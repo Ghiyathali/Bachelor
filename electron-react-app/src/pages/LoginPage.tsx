@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { login } from '../api/auth'
 import { getErrorMessage } from '../api/client'
 import { useAuthStore } from '../stores/authStore'
@@ -85,11 +85,9 @@ export default function LoginPage() {
         </button>
       </form>
 
+      {/* #52: accounts are created by an Admin, there is no self-registration */}
       <p className="mt-6 text-sm text-slate-400">
-        No account yet?{' '}
-        <Link to="/register" className="font-medium text-sky-400 hover:text-sky-300">
-          Register
-        </Link>
+        No account yet? Ask an administrator to create one for you.
       </p>
     </section>
   )
