@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import {
   Link,
   createHashHistory,
@@ -8,9 +7,9 @@ import {
   redirect,
 } from '@tanstack/react-router'
 import App from './App'
-import { getTodos } from './api/todos'
 import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
 import DashboardPage from './pages/DashboardPage'
+import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
@@ -41,45 +40,12 @@ function redirectIfLoggedIn() {
   }
 }
 
-function HomePage() {
-  const { data: todos, error, isLoading } = useQuery({
-    queryKey: ['todos'],
-    queryFn: getTodos,
-  })
-
-  return (
-    <section className="max-w-2xl">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Electron + React</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-6xl">Your desktop app is ready.</h1>
-      <p className="mt-6 text-lg leading-8 text-slate-300">
-        Routing, Tailwind CSS, and the REST API are connected.
-      </p>
-      <section className="mt-10 rounded-lg border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Todos from the API</h2>
-        {isLoading && <p className="mt-3 text-slate-300">Loading todos…</p>}
-        {error && (
-          <p className="mt-3 text-rose-300">
-            Could not reach the REST server. Confirm PostgreSQL is running and run `npm run dev`.
-          </p>
-        )}
-        {todos && (todos.length === 0 ? (
-          <p className="mt-3 text-slate-300">The API is connected. No todos yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-slate-300">
-            {todos.map((todo) => <li key={todo.id}>{todo.title}</li>)}
-          </ul>
-        ))}
-      </section>
-    </section>
-  )
-}
-
 function SettingsPage() {
   return (
     <section className="max-w-2xl">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Example route</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Pangaea Analytics</p>
       <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Settings</h1>
-      <p className="mt-6 text-lg leading-8 text-slate-300">This page verifies client-side navigation in both development and the packaged Electron app.</p>
+      <p className="mt-6 text-lg leading-8 text-slate-300">Account settings will be available here.</p>
     </section>
   )
 }
