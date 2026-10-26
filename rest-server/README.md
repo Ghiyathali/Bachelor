@@ -84,5 +84,3 @@ dashboard numbers. First-admin creation is configured separately by `SeedAdmin`.
 
 Run the requests in `rest-server.http` from top to bottom to test the complete
 flow in VS Code.
-
-The original sample CRUD endpoints remain available at `/api/todos`.

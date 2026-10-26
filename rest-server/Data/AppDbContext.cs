@@ -5,7 +5,6 @@ namespace RestServer.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Event> Events => Set<Event>();
