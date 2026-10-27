@@ -5,6 +5,7 @@ namespace RestServer.Tests;
 
 // Integration tests: each test sends a real HTTP request through the whole
 // REST server (routing, validation, auth, controller, EF Core) to a real PostgreSQL.
+[Collection("API integration")]
 public class AuthEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>, IAsyncLifetime
 {
     // A stranger: no token.

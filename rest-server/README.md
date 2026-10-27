@@ -70,6 +70,32 @@ Event management and dashboard endpoints still require a JWT bearer token.
 
 Dashboard endpoints never return individual feedback or registration rows.
 
+### Trends over time
+
+`GET /api/dashboard/trends?interval=month&from=2035-01-01&to=2035-04-30&eventId=1`
+requires Admin or Event Manager. All filters are optional; `interval` defaults to
+`month` and also accepts `season`. Dates filter the event's start date in UTC,
+including both boundary dates. Without dates the range spans matching events.
+Explicit dates preserve leading/trailing gaps. Ranges are limited to 100 years.
+
+Each period contains `periodStart`, `eventCount`, `feedbackResponses`,
+`averageSatisfaction`, and `participants`. Participants count Accepted sign-ups
+(status 1), matching the overview. Satisfaction is the mean of all feedback
+ratings for matching events, regardless of submission date. Seasons use the
+same response-weighted mean, rather than averaging monthly averages. Winter
+starts December 1 of the previous year, spring March 1, summer June 1, and
+autumn September 1. Date filters can select only part of a season.
+
+No events means null participants; events with no Accepted sign-ups mean zero.
+No feedback means null satisfaction. The D3 chart breaks each line at nulls,
+marks missing values with crosses, and provides an accessible values table.
+Its event/date filters apply to both series; the other dashboard cards retain
+their existing scope.
+
+`TrendsEndpointTests` compare the endpoint against independent monthly SQL on
+controlled data covering gaps, unequal response counts, UTC boundaries, and filters.
+Tests use the existing Docker-based PostgreSQL setup.
+
 Demo data seeding is off by default, including in Development. To opt in, set
 the following in `rest-server/.env` (or as an environment variable):
 
