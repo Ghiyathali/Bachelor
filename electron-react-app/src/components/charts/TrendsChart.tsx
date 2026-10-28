@@ -17,8 +17,9 @@ export default function TrendsChart({ data }: { data: Trends }) {
   const leftAxis = useRef<SVGGElement>(null)
   const rightAxis = useRef<SVGGElement>(null)
   const titleId = useId()
-  const height = 350
-  const margin = { top: 30, right: 65, bottom: 65, left: 55 }
+  // Reserve separate rows for tick labels, both gap markers, and the axis caption.
+  const height = 375
+  const margin = { top: 30, right: 65, bottom: 90, left: 55 }
   const chartWidth = Math.max(width, 320)
   const innerWidth = chartWidth - margin.left - margin.right
   const bottom = height - margin.bottom
