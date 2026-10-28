@@ -47,3 +47,35 @@ export async function getAttendanceByEvent(limit = 10): Promise<AttendanceByEven
   })
   return data
 }
+
+export interface TrendPoint {
+  periodStart: string
+  eventCount: number
+  feedbackResponses: number
+  averageSatisfaction: number | null
+  participants: number | null
+}
+
+export interface TrendFilters {
+  interval: 'month' | 'season'
+  eventId?: number
+  from?: string
+  to?: string
+}
+
+export interface Trends {
+  interval: TrendFilters['interval']
+  periods: TrendPoint[]
+}
+
+export async function getTrends(filters: TrendFilters): Promise<Trends> {
+  const { data } = await api.get<Trends>('/api/dashboard/trends', { params: filters })
+  return data
+}
+
+export async function getTrendEvents(): Promise<{ id: number; name: string }[]> {
+  const { data } = await api.get<{ id: number; name: string }[]>('/api/events', {
+    params: { feedbackOpenOnly: false },
+  })
+  return data
+}
