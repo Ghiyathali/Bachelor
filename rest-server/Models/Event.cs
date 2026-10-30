@@ -9,6 +9,11 @@ public class Event
     public string? Location { get; set; }
     public bool IsFeedbackOpen { get; set; }
 
+    // #53: optional - events created before types existed (or not yet categorised) stay valid.
+    // Deleting a type sets this back to null; the event itself is kept.
+    public int? EventTypeId { get; set; }
+    public EventType? EventType { get; set; }
+
     public ICollection<Feedback> Feedback { get; set; } = new List<Feedback>();
     public ICollection<EventRegistration> Registrations { get; set; } = new List<EventRegistration>();
 }

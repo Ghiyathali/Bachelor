@@ -70,6 +70,28 @@ Event management and dashboard endpoints still require a JWT bearer token.
 
 Dashboard endpoints never return individual feedback or registration rows.
 
+### Event types
+
+Events can have an optional type (for example Workshop or Sports), used by the
+type filter (FR-05) and the type comparison (FR-08). Types are stored as data,
+so they can be changed in the app without a code change.
+
+- `GET /api/event-types` lists all types (any logged-in user).
+- `POST /api/event-types`, `PUT /api/event-types/{id}` and
+  `DELETE /api/event-types/{id}` add, rename and delete types (Admin or Event
+  Manager). Deleting a type keeps its events; they simply have no type.
+- `POST /api/events` accepts an optional `eventTypeId`, and
+  `PATCH /api/events/{eventId}/event-type` sets or clears the type of an
+  existing event (Admin or Event Manager).
+
+On startup, an empty `EventTypes` table gets placeholder types (Workshop, Sports,
+Cultural evening, Creative arts, Social meetup). They are based on PYN's public
+events page and are meant to be renamed or replaced once PYN confirms their
+categories. The seeder never changes types once any exist.
+
+Run `dotnet tool run dotnet-ef database update` after pulling this change, before
+starting the API, otherwise startup fails because the `EventTypes` table is missing.
+
 ### Trends over time
 
 `GET /api/dashboard/trends?interval=month&from=2035-01-01&to=2035-04-30&eventId=1`

@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Event> Events => Set<Event>();
+    public DbSet<EventType> EventTypes => Set<EventType>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
 
@@ -40,10 +41,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // #53: event categories. Names are unique, so the type filter never shows duplicates.
+        modelBuilder.Entity<EventType>(entity =>
+        {
+            entity.Property(eventType => eventType.Name).HasMaxLength(100);
+            entity.HasIndex(eventType => eventType.Name).IsUnique();
+        });
+
         modelBuilder.Entity<Event>(entity =>
         {
             entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
             entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
+
+            // #53: optional type. Deleting a type keeps its events and sets their type to null.
+            entity.HasOne(eventItem => eventItem.EventType)
+                .WithMany(eventType => eventType.Events)
+                .HasForeignKey(eventItem => eventItem.EventTypeId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Feedback>(entity =>

@@ -72,6 +72,9 @@ namespace RestServer.Migrations
                     b.Property<DateTimeOffset>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("EventTypeId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsFeedbackOpen")
                         .HasColumnType("boolean");
 
@@ -88,6 +91,8 @@ namespace RestServer.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EventTypeId");
 
                     b.ToTable("Events");
                 });
@@ -144,6 +149,27 @@ namespace RestServer.Migrations
 
                             t.HasCheckConstraint("CK_EventRegistrations_Status", "\"Status\" BETWEEN 0 AND 3");
                         });
+                });
+
+            modelBuilder.Entity("RestServer.Models.EventType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("EventTypes");
                 });
 
             modelBuilder.Entity("RestServer.Models.Feedback", b =>
@@ -249,6 +275,16 @@ namespace RestServer.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("RestServer.Models.Event", b =>
+                {
+                    b.HasOne("RestServer.Models.EventType", "EventType")
+                        .WithMany("Events")
+                        .HasForeignKey("EventTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EventType");
+                });
+
             modelBuilder.Entity("RestServer.Models.EventRegistration", b =>
                 {
                     b.HasOne("RestServer.Models.Event", "Event")
@@ -276,6 +312,11 @@ namespace RestServer.Migrations
                     b.Navigation("Feedback");
 
                     b.Navigation("Registrations");
+                });
+
+            modelBuilder.Entity("RestServer.Models.EventType", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("RestServer.Models.Role", b =>
