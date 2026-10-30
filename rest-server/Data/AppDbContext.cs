@@ -24,7 +24,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new Role { Id = 1, Name = "Admin" },
                 new Role { Id = 2, Name = "Event Manager" },
                 new Role { Id = 3, Name = "Marketing Manager" },
-                new Role { Id = 4, Name = "User" });
+                new Role { Id = 4, Name = "Standard User" });
         });
 
         modelBuilder.Entity<Account>(entity =>

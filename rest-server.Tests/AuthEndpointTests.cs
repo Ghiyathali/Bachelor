@@ -56,7 +56,7 @@ public class AuthEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>, 
     [Fact]
     public async Task Register_AsNonAdmin_Returns403()
     {
-        // The Admin creates a normal "User" account, which then tries to create another account.
+        // The Admin creates a normal "Standard User" account, which then tries to create another account.
         var username = NewUsername();
         await Register(_admin, $"{username}@test.example", username, ValidPassword);
         var userClient = await factory.CreateLoggedInClientAsync(username, ValidPassword);

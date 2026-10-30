@@ -260,7 +260,7 @@ namespace RestServer.Migrations
                         new
                         {
                             Id = 4,
-                            Name = "User"
+                            Name = "Standard User"
                         });
                 });
 
