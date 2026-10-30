@@ -7,22 +7,29 @@ using RestServer.Models;
 
 namespace RestServer.Controllers;
 
+// #53: EventTypeId/EventTypeName are null when the event has no type yet.
 public record EventResponse(
     int Id,
     string Name,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     string? Location,
-    bool IsFeedbackOpen);
+    bool IsFeedbackOpen,
+    int? EventTypeId,
+    string? EventTypeName);
 
 public record CreateEventRequest(
     [Required, MaxLength(200)] string Name,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     [MaxLength(300)] string? Location,
-    bool IsFeedbackOpen = false);
+    bool IsFeedbackOpen = false,
+    int? EventTypeId = null);
 
 public record SetFeedbackStatusRequest(bool IsFeedbackOpen);
+
+// #53: null removes the type from the event.
+public record SetEventTypeRequest(int? EventTypeId);
 
 [ApiController]
 [Route("api/events")]
@@ -32,7 +39,7 @@ public class EventsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<IEnumerable<EventResponse>>> GetAll(
         [FromQuery] bool feedbackOpenOnly = true)
     {
-        var query = db.Events.AsNoTracking();
+        var query = db.Events.AsNoTracking().Include(eventItem => eventItem.EventType).AsQueryable();
 
         if (feedbackOpenOnly)
             query = query.Where(eventItem => eventItem.IsFeedbackOpen);
@@ -46,7 +53,10 @@ public class EventsController(AppDbContext db) : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EventResponse>> GetById(int id)
     {
-        var eventItem = await db.Events.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id);
+        var eventItem = await db.Events
+            .AsNoTracking()
+            .Include(item => item.EventType)
+            .SingleOrDefaultAsync(item => item.Id == id);
         return eventItem is null ? NotFound() : Ok(ToResponse(eventItem));
     }
 
@@ -61,6 +71,14 @@ public class EventsController(AppDbContext db) : ControllerBase
         if (request.EndsAt <= request.StartsAt)
             return BadRequest(new { message = "Event end time must be after its start time." });
 
+        EventType? eventType = null;
+        if (request.EventTypeId.HasValue)
+        {
+            eventType = await db.EventTypes.SingleOrDefaultAsync(item => item.Id == request.EventTypeId.Value);
+            if (eventType is null)
+                return BadRequest(new { message = "Event type not found." });
+        }
+
         var eventItem = new Event
         {
             Name = name,
@@ -68,6 +86,7 @@ public class EventsController(AppDbContext db) : ControllerBase
             EndsAt = request.EndsAt,
             Location = string.IsNullOrWhiteSpace(request.Location) ? null : request.Location.Trim(),
             IsFeedbackOpen = request.IsFeedbackOpen,
+            EventType = eventType,
         };
 
         db.Events.Add(eventItem);
@@ -82,11 +101,39 @@ public class EventsController(AppDbContext db) : ControllerBase
         int id,
         SetFeedbackStatusRequest request)
     {
-        var eventItem = await db.Events.SingleOrDefaultAsync(item => item.Id == id);
+        var eventItem = await db.Events
+            .Include(item => item.EventType)
+            .SingleOrDefaultAsync(item => item.Id == id);
         if (eventItem is null)
             return NotFound(new { message = "Event not found." });
 
         eventItem.IsFeedbackOpen = request.IsFeedbackOpen;
+        await db.SaveChangesAsync();
+
+        return Ok(ToResponse(eventItem));
+    }
+
+    // #53: set or clear the type of an existing event.
+    [HttpPatch("{id:int}/event-type")]
+    [Authorize(Roles = "Admin,Event Manager")]
+    public async Task<ActionResult<EventResponse>> SetEventType(
+        int id,
+        SetEventTypeRequest request)
+    {
+        var eventItem = await db.Events.SingleOrDefaultAsync(item => item.Id == id);
+        if (eventItem is null)
+            return NotFound(new { message = "Event not found." });
+
+        EventType? eventType = null;
+        if (request.EventTypeId.HasValue)
+        {
+            eventType = await db.EventTypes.SingleOrDefaultAsync(item => item.Id == request.EventTypeId.Value);
+            if (eventType is null)
+                return BadRequest(new { message = "Event type not found." });
+        }
+
+        eventItem.EventTypeId = eventType?.Id;
+        eventItem.EventType = eventType;
         await db.SaveChangesAsync();
 
         return Ok(ToResponse(eventItem));
@@ -98,5 +145,7 @@ public class EventsController(AppDbContext db) : ControllerBase
         eventItem.StartsAt,
         eventItem.EndsAt,
         eventItem.Location,
-        eventItem.IsFeedbackOpen);
+        eventItem.IsFeedbackOpen,
+        eventItem.EventTypeId,
+        eventItem.EventType?.Name);
 }

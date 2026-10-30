@@ -62,6 +62,18 @@ public static class DevSeeder
             return;
         }
 
+        // #53: demo events without a type get one, spread over the existing types,
+        // so the type filter (FR-05) and type comparison (FR-08) have data to show.
+        var eventTypes = await db.EventTypes.OrderBy(eventType => eventType.Id).ToListAsync();
+        var typesAssigned = 0;
+        for (var index = 0; index < events.Count && eventTypes.Count > 0; index++)
+        {
+            if (events[index].EventTypeId is not null)
+                continue;
+            events[index].EventTypeId = eventTypes[index % eventTypes.Count].Id;
+            typesAssigned++;
+        }
+
         var eventIds = events.Select(eventItem => eventItem.Id).ToList();
         var eventsWithRegistrations = await db.EventRegistrations
             .Where(registration => eventIds.Contains(registration.EventId))
@@ -122,7 +134,7 @@ public static class DevSeeder
         foreach (var registration in withoutFewerOpportunities)
             registration.FewerOpportunities = random.Next(100) < 30;
 
-        if (added == 0 && withoutDemographics.Count == 0 && withoutFewerOpportunities.Count == 0)
+        if (added == 0 && withoutDemographics.Count == 0 && withoutFewerOpportunities.Count == 0 && typesAssigned == 0)
             return;
 
         await db.SaveChangesAsync();

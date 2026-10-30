@@ -89,6 +89,14 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// #53: placeholder event types for a new, empty database (every environment).
+// Needs the AddEventTypes migration - run `dotnet tool run dotnet-ef database update` first.
+using (var seedScope = app.Services.CreateScope())
+{
+    var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await EventTypeSeeder.SeedDefaultEventTypesAsync(seedDb, app.Logger);
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
