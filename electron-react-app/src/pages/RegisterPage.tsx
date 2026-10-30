@@ -88,7 +88,7 @@ export default function RegisterPage() {
     <section className="mx-auto max-w-sm">
       <h1 className="text-3xl font-bold text-white">Create account</h1>
       <p className="mt-2 text-sm text-slate-400">
-        Create a login for a PYN staff member. New accounts get the User role.
+        Create a login for a PYN staff member. New accounts get the Standard User role.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>

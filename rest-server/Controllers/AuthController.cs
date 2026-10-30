@@ -34,8 +34,8 @@ public record LoginResponse(string Token, DateTimeOffset ExpiresAt, string Usern
 [Route("api/auth")]
 public class AuthController(AppDbContext db, TokenService tokens) : ControllerBase
 {
-    // Frederik's seeded role name. The requirements call it "Standard User" - align later.
-    private const string DefaultRoleName = "User";
+    // The lowest of the four roles in FR-12 (seeded in AppDbContext.cs).
+    private const string DefaultRoleName = "Standard User";
 
     // A real bcrypt hash of a random value. Used when the account does not exist,
     // so "unknown user" takes as long as "wrong password" - attackers can't tell them apart by timing.

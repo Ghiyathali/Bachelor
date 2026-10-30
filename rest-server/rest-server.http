@@ -85,7 +85,7 @@ Content-Type: application/json
 
 ### ---------- PROTECTED ----------
 
-### 9. /me WITH token from test 5 -> expect 200 and role "User"
+### 9. /me WITH token from test 5 -> expect 200 and role "Standard User"
 GET {{host}}/api/auth/me
 Authorization: Bearer {{login.response.body.token}}
 
