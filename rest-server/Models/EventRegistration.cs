@@ -43,5 +43,10 @@ public class EventRegistration
     // smaller than 5 people must be hidden so nobody can be recognised.
     public bool? FewerOpportunities { get; set; }
 
+    // #69: PYN's event_registrations.id when the sign-up was synced from PYN's database.
+    // Only a technical key so a sign-up is never copied twice - it identifies nobody
+    // in our system, and PYN deletes the personal row after 6 months.
+    public long? ExternalId { get; set; }
+
     public Event Event { get; set; } = null!;
 }

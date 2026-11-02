@@ -53,6 +53,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
             entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
 
+            // #69: one PYN event = at most one row here (empty for events made in our app).
+            entity.HasIndex(eventItem => eventItem.ExternalId).IsUnique();
+
             // #53: optional type. Deleting a type keeps its events and sets their type to null.
             entity.HasOne(eventItem => eventItem.EventType)
                 .WithMany(eventType => eventType.Events)
@@ -94,6 +97,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(registration => registration.Nationality).HasMaxLength(100);
             entity.Property(registration => registration.Gender).HasMaxLength(50);
             entity.Property(registration => registration.HeardAbout).HasMaxLength(100);
+
+            // #69: one PYN sign-up = at most one row here, so re-running the sync never duplicates.
+            entity.HasIndex(registration => registration.ExternalId).IsUnique();
 
             entity.HasOne(registration => registration.Event)
                 .WithMany(eventItem => eventItem.Registrations)

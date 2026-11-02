@@ -75,6 +75,9 @@ namespace RestServer.Migrations
                     b.Property<int?>("EventTypeId")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ExternalId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsFeedbackOpen")
                         .HasColumnType("boolean");
 
@@ -93,6 +96,9 @@ namespace RestServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EventTypeId");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.ToTable("Events");
                 });
@@ -121,6 +127,9 @@ namespace RestServer.Migrations
                     b.Property<int>("EventId")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("ExternalId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool?>("FewerOpportunities")
                         .HasColumnType("boolean");
 
@@ -142,6 +151,9 @@ namespace RestServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.ToTable("EventRegistrations", t =>
                         {
