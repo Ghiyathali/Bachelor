@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<EventType> EventTypes => Set<EventType>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
+    public DbSet<PynSyncRun> PynSyncRuns => Set<PynSyncRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,6 +106,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(eventItem => eventItem.Registrations)
                 .HasForeignKey(registration => registration.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // #69: history of PYN sync runs. Indexed by start time, so "last run" is a quick lookup.
+        modelBuilder.Entity<PynSyncRun>(entity =>
+        {
+            entity.Property(run => run.TriggeredBy).HasMaxLength(20);
+            entity.Property(run => run.Error).HasMaxLength(1000);
+            entity.HasIndex(run => run.StartedAt);
         });
     }
 }

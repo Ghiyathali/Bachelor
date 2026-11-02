@@ -233,6 +233,72 @@ namespace RestServer.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestServer.Models.PynSyncRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("EventTypesCreated")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventsInserted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventsRead")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventsSkipped")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventsUpdated")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RegistrationsEventAmbiguous")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RegistrationsEventNotFound")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RegistrationsInserted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RegistrationsRead")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RegistrationsUnknownStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RegistrationsUpdated")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TriggeredBy")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartedAt");
+
+                    b.ToTable("PynSyncRuns");
+                });
+
             modelBuilder.Entity("RestServer.Models.Role", b =>
                 {
                     b.Property<int>("Id")
