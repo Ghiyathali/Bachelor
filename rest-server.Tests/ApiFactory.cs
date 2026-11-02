@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using RestServer.Data;
 using RestServer.Models;
 using Testcontainers.PostgreSql;
@@ -30,6 +31,10 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         // environment variables (the same names as in rest-server/.env).
         Environment.SetEnvironmentVariable("ConnectionStrings__Postgres", _database.GetConnectionString());
         Environment.SetEnvironmentVariable("Jwt__Key", "test-only-signing-key-that-is-at-least-32-bytes");
+
+        // #69: the PYN sync reads the mock PYN views in this same test database.
+        Environment.SetEnvironmentVariable("ConnectionStrings__PynSource", _database.GetConnectionString());
+        Environment.SetEnvironmentVariable("PynSync__ViewSchema", "pyn_mock_analytics");
 
         // Create the tables with the team's real EF Core migrations.
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -77,6 +82,24 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         CreateLoggedInClientAsync(AdminUsername, AdminPassword);
 
     private record TokenBody(string Token);
+
+    // #69: a fresh AppDbContext on the test database, to check what the API wrote.
+    public AppDbContext CreateDbContext() =>
+        new(new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(_database.GetConnectionString()).Options);
+
+    // #69: runs SQL on the test database - the mock PYN script, or a change "at PYN".
+    public async Task ExecuteSqlAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(_database.GetConnectionString());
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    // #69: creates the mock PYN database (rest-server/Data/PynMock/pyn_mock.sql).
+    public async Task CreatePynMockAsync() =>
+        await ExecuteSqlAsync(await File.ReadAllTextAsync(
+            Path.Combine(AppContext.BaseDirectory, "PynMock", "pyn_mock.sql")));
 
     async Task IAsyncLifetime.DisposeAsync()
     {

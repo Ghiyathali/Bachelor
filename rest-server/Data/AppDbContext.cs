@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<EventType> EventTypes => Set<EventType>();
     public DbSet<Feedback> Feedback => Set<Feedback>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
+    public DbSet<PynSyncRun> PynSyncRuns => Set<PynSyncRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +53,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
             entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
+
+            // #69: one PYN event = at most one row here (empty for events made in our app).
+            entity.HasIndex(eventItem => eventItem.ExternalId).IsUnique();
 
             // #53: optional type. Deleting a type keeps its events and sets their type to null.
             entity.HasOne(eventItem => eventItem.EventType)
@@ -95,10 +99,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(registration => registration.Gender).HasMaxLength(50);
             entity.Property(registration => registration.HeardAbout).HasMaxLength(100);
 
+            // #69: one PYN sign-up = at most one row here, so re-running the sync never duplicates.
+            entity.HasIndex(registration => registration.ExternalId).IsUnique();
+
             entity.HasOne(registration => registration.Event)
                 .WithMany(eventItem => eventItem.Registrations)
                 .HasForeignKey(registration => registration.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // #69: history of PYN sync runs. Indexed by start time, so "last run" is a quick lookup.
+        modelBuilder.Entity<PynSyncRun>(entity =>
+        {
+            entity.Property(run => run.TriggeredBy).HasMaxLength(20);
+            entity.Property(run => run.Error).HasMaxLength(1000);
+            entity.HasIndex(run => run.StartedAt);
         });
     }
 }
