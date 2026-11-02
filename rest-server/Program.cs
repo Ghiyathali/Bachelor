@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestServer.Auth;
 using RestServer.Data;
+using RestServer.Sync;
 
 // Load env file
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -56,6 +57,16 @@ builder.Services
         };
     });
 builder.Services.AddAuthorization();
+
+// ---------- PYN sync (#69) ----------
+// Reads PYN's anonymised views and copies them into our tables (design "PYN Data Integration").
+// Not configured (empty connection string) -> "Sync now" answers 503, everything else works normally.
+builder.Services.AddSingleton(new PynSyncOptions
+{
+    ConnectionString = builder.Configuration.GetConnectionString("PynSource"),
+    ViewSchema = builder.Configuration.GetValue("PynSync:ViewSchema", "analytics")!,
+});
+builder.Services.AddScoped<PynSyncService>();
 
 // ---------- Rate limiting (NEW) ----------
 // The "bouncer" for the public feedback endpoint: each IP address may submit
