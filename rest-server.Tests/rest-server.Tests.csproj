@@ -25,4 +25,9 @@
     <ProjectReference Include="..\rest-server\rest-server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- #69: the mock PYN database script, copied next to the tests so the sync tests can run it -->
+    <None Include="..\rest-server\Data\PynMock\pyn_mock.sql" Link="PynMock\pyn_mock.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
