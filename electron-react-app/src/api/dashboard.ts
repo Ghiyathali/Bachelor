@@ -79,3 +79,21 @@ export async function getTrendEvents(): Promise<{ id: number; name: string }[]> 
   })
   return data
 }
+
+export interface EventTypeComparison {
+  eventTypeId: number | null
+  name: string
+  eventCount: number
+  averageSatisfaction: number | null
+  participants: number | null
+}
+
+export interface EventTypeFilters {
+  from?: string
+  to?: string
+}
+
+export async function getEventTypeComparison(filters: EventTypeFilters): Promise<{ types: EventTypeComparison[] }> {
+  const { data } = await api.get<{ types: EventTypeComparison[] }>('/api/dashboard/event-types', { params: filters })
+  return data
+}

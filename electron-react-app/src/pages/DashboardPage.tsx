@@ -7,6 +7,7 @@ import {
 import { getErrorMessage } from '../api/client'
 import OverviewTiles from '../components/OverviewTiles'
 import TrendsCard from '../components/TrendsCard'
+import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
 import SatisfactionDistributionChart from '../components/charts/SatisfactionDistributionChart'
 
@@ -59,6 +60,7 @@ export default function DashboardPage() {
       </div>
 
       <TrendsCard />
+      <EventTypeComparisonCard />
 
       <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-2">
         <ChartCard
