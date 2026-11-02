@@ -13,7 +13,7 @@ export interface BarChartDatum {
   key: string
   label: string
   description?: string
-  values: Record<string, number>
+  values: Record<string, number | null>
 }
 
 interface ResponsiveBarChartProps {
@@ -21,6 +21,7 @@ interface ResponsiveBarChartProps {
   series: BarSeries[]
   xAxisLabel: string
   yAxisLabel: string
+  yMax?: number
   formatTooltip?: (datum: BarChartDatum, series: BarSeries, value: number) => string
 }
 
@@ -38,6 +39,7 @@ export default function ResponsiveBarChart({
   series,
   xAxisLabel,
   yAxisLabel,
+  yMax,
   formatTooltip = (datum, item, value) =>
     `${datum.description ?? datum.label} · ${item.label}: ${value}`,
 }: ResponsiveBarChartProps) {
@@ -61,8 +63,8 @@ export default function ResponsiveBarChart({
   )
   const maxValue = max(data.flatMap((datum) => series.map((item) => datum.values[item.key] ?? 0))) ?? 0
   const y = useMemo(
-    () => scaleLinear().domain([0, Math.max(1, maxValue)]).nice().range([innerHeight, 0]),
-    [innerHeight, maxValue],
+    () => scaleLinear().domain([0, yMax ?? Math.max(1, maxValue)]).nice().range([innerHeight, 0]),
+    [innerHeight, maxValue, yMax],
   )
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export default function ResponsiveBarChart({
     const axis = select(yAxisRef.current).call(axisLeft(y).ticks(5).tickFormat(format('d')))
     axis.selectAll('path, line').attr('stroke', '#475569')
     axis.selectAll('text').attr('fill', '#cbd5e1').attr('font-size', 11)
-  }, [y])
+  }, [y, width])
 
   function showTooltip(
     event: PointerEvent<SVGRectElement> | FocusEvent<SVGRectElement>,
@@ -127,7 +129,9 @@ export default function ResponsiveBarChart({
 
             {data.flatMap((datum) =>
               series.map((item) => {
-                const value = datum.values[item.key] ?? 0
+                const value = datum.values[item.key]
+                // Missing/suppressed values must not appear as zero in bars or tooltips.
+                if (value == null) return null
                 const barX = (x(datum.key) ?? 0) + (xSeries(item.key) ?? 0)
                 const barY = y(value)
 
