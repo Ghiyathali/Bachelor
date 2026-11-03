@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RestServer.Dashboard;
 using RestServer.Data;
 using RestServer.Models;
 
 namespace RestServer.Controllers;
 
-public record TrendPoint(DateOnly PeriodStart, int EventCount, int FeedbackResponses,
+// #25 / NFR-02: FeedbackResponses, AverageSatisfaction and Participants are null when a
+// period covers fewer than 5 people.
+public record TrendPoint(DateOnly PeriodStart, int EventCount, int? FeedbackResponses,
     double? AverageSatisfaction, int? Participants);
 public record TrendsResponse(string Interval, IReadOnlyList<TrendPoint> Periods);
 
@@ -19,8 +22,12 @@ public class TrendsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<TrendsResponse>> Get(
         [FromQuery] string interval = "month", [FromQuery] int? eventId = null,
         [FromQuery] DateOnly? from = null, [FromQuery] DateOnly? to = null,
+        [FromQuery] DashboardFilter? filter = null,
         CancellationToken cancellationToken = default)
     {
+        // #25: the dashboard filter bar (event type, season, city, age band, gender).
+        // The chart's own interval/event/from/to work exactly as before.
+        filter ??= new DashboardFilter();
         if (interval is not ("month" or "season"))
             return BadRequest(new { message = "Interval must be month or season." });
         if (from > to || from is { Year: < 2 or > 9998 } || to is { Year: < 2 or > 9998 })
@@ -40,6 +47,7 @@ public class TrendsController(AppDbContext db) : ControllerBase
             var end = new DateTimeOffset(to.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
             events = events.Where(e => e.StartsAt < end);
         }
+        events = filter.ApplyToEvents(events);
 
         // Separate SQL aggregates avoid multiplying feedback by registrations when joining.
         // UTC event dates are used even when feedback/sign-ups arrive in a later month.
@@ -51,8 +59,8 @@ public class TrendsController(AppDbContext db) : ControllerBase
             .GroupBy(f => new { f.Event.StartsAt.UtcDateTime.Year, f.Event.StartsAt.UtcDateTime.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count(), Sum = g.Sum(f => (long)f.Rating) })
             .ToListAsync(cancellationToken);
-        var participantMonths = await db.EventRegistrations
-            .Where(r => r.Status == RegistrationStatus.Accepted && events.Any(e => e.Id == r.EventId))
+        var participantMonths = await filter.ApplyToSignUps(db.EventRegistrations, events)
+            .Where(r => r.Status == RegistrationStatus.Accepted)
             .GroupBy(r => new { r.Event.StartsAt.UtcDateTime.Year, r.Event.StartsAt.UtcDateTime.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
             .ToListAsync(cancellationToken);
@@ -83,9 +91,11 @@ public class TrendsController(AppDbContext db) : ControllerBase
         {
             var count = eventCounts.GetValueOrDefault(date);
             var ratings = feedback.GetValueOrDefault(date);
-            points.Add(new TrendPoint(date, count, ratings.Count,
-                ratings.Count == 0 ? null : (double)ratings.Sum / ratings.Count,
-                count == 0 ? null : participants.GetValueOrDefault(date)));
+            // NFR-02: hide a period's feedback and participants when they cover fewer than 5 people.
+            var enoughFeedback = ratings.Count >= DashboardFilter.MinGroupSize;
+            points.Add(new TrendPoint(date, count, DashboardFilter.Suppress(ratings.Count),
+                enoughFeedback ? (double)ratings.Sum / ratings.Count : null,
+                count == 0 ? null : DashboardFilter.Suppress(participants.GetValueOrDefault(date))));
         }
         return Ok(new TrendsResponse(interval, points));
     }

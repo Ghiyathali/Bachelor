@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RestServer.Dashboard;
 using RestServer.Data;
 using RestServer.Models;
 
@@ -18,8 +19,12 @@ public class EventTypeComparisonController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<EventTypeComparisonResponse>> Get(
         [FromQuery] DateOnly? from = null, [FromQuery] DateOnly? to = null,
+        [FromQuery] DashboardFilter? filter = null,
         CancellationToken cancellationToken = default)
     {
+        // #25: the dashboard filter bar (event, event type, season, city, age band, gender).
+        // The card's own from/to work exactly as before.
+        filter ??= new DashboardFilter();
         if (from > to || from is { Year: < 2 or > 9998 } || to is { Year: < 2 or > 9998 })
             return BadRequest(new { message = "Use an ordered date range between years 2 and 9998." });
 
@@ -34,6 +39,7 @@ public class EventTypeComparisonController(AppDbContext db) : ControllerBase
             var end = new DateTimeOffset(to.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
             events = events.Where(e => e.StartsAt < end);
         }
+        events = filter.ApplyToEvents(events);
 
         // Aggregate separately so feedback and registrations cannot multiply each other.
         // Null types form one Uncategorised group; unused types are not included.
@@ -44,8 +50,8 @@ public class EventTypeComparisonController(AppDbContext db) : ControllerBase
             .GroupBy(f => f.Event.EventTypeId)
             .Select(g => new { TypeId = g.Key, Count = g.Count(), Average = g.Average(f => (double)f.Rating) })
             .ToListAsync(cancellationToken);
-        var participants = await db.EventRegistrations
-            .Where(r => r.Status == RegistrationStatus.Accepted && events.Any(e => e.Id == r.EventId))
+        var participants = await filter.ApplyToSignUps(db.EventRegistrations, events)
+            .Where(r => r.Status == RegistrationStatus.Accepted)
             .GroupBy(r => r.Event.EventTypeId)
             .Select(g => new { TypeId = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
