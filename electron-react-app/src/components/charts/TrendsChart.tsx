@@ -54,7 +54,7 @@ export default function TrendsChart({ data }: { data: Trends }) {
     .x(p => x(p.date)).y(p => satisfaction(p.averageSatisfaction!))
   const participantLine = line<Point>().defined(p => p.participants !== null)
     .x(p => x(p.date)).y(p => participants(p.participants!))
-  const describe = (p: Point) => `${periodLabel(p.date, data.interval)}: ${p.eventCount} events; satisfaction ${p.averageSatisfaction?.toFixed(2) ?? 'no data'} (${p.feedbackResponses} responses); participants ${p.participants ?? 'no data'}`
+  const describe = (p: Point) => `${periodLabel(p.date, data.interval)}: ${p.eventCount} events; satisfaction ${p.averageSatisfaction?.toFixed(2) ?? 'not enough data'} (${p.feedbackResponses ?? 'fewer than 5'} responses); participants ${p.participants ?? 'not enough data'}`
 
   return (
     <div ref={ref} className="w-full">
@@ -93,8 +93,8 @@ export default function TrendsChart({ data }: { data: Trends }) {
             <thead><tr>{['Period', 'Events', 'Satisfaction', 'Responses', 'Participants'].map(label => <th key={label} scope="col" className="p-2">{label}</th>)}</tr></thead>
             <tbody>{points.map(p => <tr key={p.periodStart} className="border-t border-slate-800">
               <th scope="row" className="p-2">{periodLabel(p.date, data.interval)}</th>
-              <td className="p-2">{p.eventCount}</td><td className="p-2">{p.averageSatisfaction?.toFixed(2) ?? 'No data'}</td>
-              <td className="p-2">{p.feedbackResponses}</td><td className="p-2">{p.participants ?? 'No data'}</td>
+              <td className="p-2">{p.eventCount}</td><td className="p-2">{p.averageSatisfaction?.toFixed(2) ?? 'Not enough data'}</td>
+              <td className="p-2">{p.feedbackResponses ?? 'Fewer than 5'}</td><td className="p-2">{p.participants ?? 'Not enough data'}</td>
             </tr>)}</tbody>
           </table>
         </div>

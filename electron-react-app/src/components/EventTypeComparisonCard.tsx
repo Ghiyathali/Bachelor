@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { getEventTypeComparison } from '../api/dashboard'
 import type { EventTypeComparison, EventTypeFilters } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
+import { combineWithBar, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import ResponsiveBarChart from './charts/ResponsiveBarChart'
 
 type SortKey = 'averageSatisfaction' | 'participants' | 'eventCount' | 'name'
@@ -18,10 +19,15 @@ export default function EventTypeComparisonCard() {
   const [sortKey, setSortKey] = useState<SortKey>('averageSatisfaction')
   const [ascending, setAscending] = useState(false)
   const invalidRange = !!(filters.from && filters.to && filters.from > filters.to)
+  // #25: this card's own dates work as before, and it also follows the dashboard filter bar.
+  const bar = useDashboardFilterStore(state => state.filters)
+  const combined = combineWithBar(filters, bar)
   const comparison = useQuery({
-    queryKey: ['dashboard', 'event-types', filters],
-    queryFn: () => getEventTypeComparison(filters),
-    enabled: !invalidRange,
+    queryKey: ['dashboard', 'event-types', filters, bar],
+    queryFn: () => getEventTypeComparison(
+      { from: combined.from, to: combined.to },
+      { eventId: bar.eventId, eventTypeId: bar.eventTypeId, season: bar.season, city: bar.city, ageBand: bar.ageBand, gender: bar.gender }),
+    enabled: !invalidRange && !combined.noOverlap,
   })
   const types = [...(comparison.data?.types ?? [])].sort((a: EventTypeComparison, b: EventTypeComparison) => {
     const left = a[sortKey], right = b[sortKey]
@@ -64,7 +70,9 @@ export default function EventTypeComparisonCard() {
       <button className="rounded-md px-3 py-2 text-sm text-sky-400 hover:bg-slate-800" onClick={() => setFilters({})}>Reset dates</button>
     </div>
     <p className="mb-4 text-xs text-slate-400">Dates refer to event starts. Satisfaction requires at least 5 feedback responses per type; participants require at least 5 accepted registrations per type. Suppressed values have no bar and sort last. Participants count accepted places across events, so a person may be counted more than once.</p>
+    <p className="mb-4 text-xs text-slate-500">Also follows the dashboard filters above.</p>
     {invalidRange ? <p role="alert" className="text-sm text-rose-300">From must be on or before To.</p>
+      : combined.noOverlap ? <p className="py-24 text-center text-sm text-slate-400">This chart’s dates do not overlap with the dashboard filters.</p>
       : comparison.isLoading ? <p role="status" className="py-24 text-center text-sm text-slate-400">Loading event types…</p>
       : comparison.error ? <p role="alert" className="py-24 text-center text-sm text-rose-300">{getErrorMessage(comparison.error)}</p>
       : types.length === 0 ? <p className="py-24 text-center text-sm text-slate-400">No events match these dates.</p>
