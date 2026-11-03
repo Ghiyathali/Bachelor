@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getDashboardOverview } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
-import { hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
+import { hasPeopleFilter, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 
 // FR-04: the key metrics at the top of the dashboard, one tile per number.
 // #25: they follow the filter bar; numbers based on fewer than 5 people come back as null.
@@ -11,6 +11,7 @@ export default function OverviewTiles() {
     queryKey: ['dashboard', 'overview', filters],
     queryFn: () => getDashboardOverview(filters),
     placeholderData: keepPreviousData, // keep the old numbers on screen while new ones load
+    enabled: hasValidDateRange(filters),
   })
 
   if (overview.error) {

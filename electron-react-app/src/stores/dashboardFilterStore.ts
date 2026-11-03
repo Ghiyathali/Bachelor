@@ -44,6 +44,12 @@ export function combineWithBar(
   }
 }
 
+// An impossible date range ("From" after "To") is never sent to the server: the filter bar
+// shows a message and the tiles and charts keep showing their previous numbers.
+export function hasValidDateRange(filters: DashboardFilters): boolean {
+  return !(filters.from && filters.to && filters.from > filters.to)
+}
+
 // City, age band and gender only apply to sign-ups: feedback is anonymous.
 export function hasPeopleFilter(filters: DashboardFilters): boolean {
   return Boolean(filters.city || filters.ageBand || filters.gender)
