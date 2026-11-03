@@ -17,13 +17,18 @@ public class TrendsEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        // #25 / NFR-02: groups of fewer than 5 people are hidden, so every rating and sign-up
+        // is created 5 times. Averages stay the same; counts are 5x and therefore visible.
+        const int copies = 5;
         Event MakeEvent(string date, int[] ratings, params RegistrationStatus[] statuses) => new()
         {
             Name = "Trend check", StartsAt = DateTimeOffset.Parse(date).ToUniversalTime(),
             EndsAt = DateTimeOffset.Parse(date).ToUniversalTime().AddHours(2),
             // Deliberately submitted later: grouping must use the event date.
-            Feedback = ratings.Select(r => new Feedback { Rating = r, CreatedAt = DateTimeOffset.Parse("2036-01-01T00:00:00Z") }).ToList(),
-            Registrations = statuses.Select(s => new EventRegistration { Status = s }).ToList(),
+            Feedback = Enumerable.Repeat(ratings, copies).SelectMany(r => r)
+                .Select(r => new Feedback { Rating = r, CreatedAt = DateTimeOffset.Parse("2036-01-01T00:00:00Z") }).ToList(),
+            Registrations = Enumerable.Repeat(statuses, copies).SelectMany(s => s)
+                .Select(s => new EventRegistration { Status = s }).ToList(),
         };
         var first = MakeEvent("2035-01-01T00:00:00Z", [5, 5], RegistrationStatus.Accepted,
             RegistrationStatus.Accepted, RegistrationStatus.Waiting, RegistrationStatus.Rejected);
@@ -41,10 +46,10 @@ public class TrendsEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.NotNull(monthly);
         Assert.Equal(4, monthly.Periods.Count);
         Assert.Equal(11.0 / 3, monthly.Periods[0].AverageSatisfaction);
-        Assert.Equal(3, monthly.Periods[0].Participants);
-        Assert.Equal(new TrendPoint(new DateOnly(2035, 2, 1), 0, 0, null, null), monthly.Periods[1]);
+        Assert.Equal(3 * copies, monthly.Periods[0].Participants);
+        Assert.Equal(new TrendPoint(new DateOnly(2035, 2, 1), 0, null, null, null), monthly.Periods[1]);
         Assert.Null(monthly.Periods[2].AverageSatisfaction);
-        Assert.Equal(0, monthly.Periods[2].Participants);
+        Assert.Null(monthly.Periods[2].Participants); // 0 accepted: fewer than 5, so hidden
         Assert.Equal(2, monthly.Periods[3].AverageSatisfaction);
 
         // Independent, manually written monthly SQL: aggregate each child table first
@@ -69,14 +74,18 @@ public class TrendsEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
               AND e."StartsAt" < '2035-05-01T00:00:00Z'::timestamptz
             GROUP BY 1 ORDER BY 1
             """).ToListAsync();
+        // The SQL returns raw numbers, so apply the same NFR-02 rule before comparing.
+        int? Hide(int count) => count >= 5 ? count : null;
         foreach (var row in sql)
-            Assert.Equal(new TrendPoint(row.PeriodStart, row.EventCount, row.FeedbackResponses,
-                row.AverageSatisfaction, row.Participants), monthly.Periods.Single(p => p.PeriodStart == row.PeriodStart));
+            Assert.Equal(new TrendPoint(row.PeriodStart, row.EventCount, Hide(row.FeedbackResponses),
+                row.FeedbackResponses >= 5 ? row.AverageSatisfaction : null,
+                row.EventCount == 0 ? null : Hide(row.Participants)),
+                monthly.Periods.Single(p => p.PeriodStart == row.PeriodStart));
 
         var filtered = await client.GetFromJsonAsync<TrendsResponse>(
             $"/api/dashboard/trends?eventId={first.Id}&from=2035-01-01&to=2035-04-30");
         Assert.Equal(5, filtered!.Periods[0].AverageSatisfaction);
-        Assert.Equal(2, filtered.Periods[0].Participants);
+        Assert.Equal(2 * copies, filtered.Periods[0].Participants);
         Assert.All(filtered.Periods.Skip(1), p => Assert.Null(p.Participants));
 
         var seasonal = await client.GetFromJsonAsync<TrendsResponse>(
@@ -84,7 +93,7 @@ public class TrendsEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(2, seasonal!.Periods.Count);
         Assert.Equal(new DateOnly(2034, 12, 1), seasonal.Periods[0].PeriodStart);
         Assert.Equal(3.5, seasonal.Periods[0].AverageSatisfaction); // (3 + 5 + 5 + 1) / 4
-        Assert.Equal(4, seasonal.Periods[0].Participants);
+        Assert.Equal(4 * copies, seasonal.Periods[0].Participants);
         Assert.Equal(2, seasonal.Periods[1].AverageSatisfaction);
 
         var empty = await client.GetFromJsonAsync<TrendsResponse>(

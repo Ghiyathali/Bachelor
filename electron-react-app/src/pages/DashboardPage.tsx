@@ -1,11 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import {
   getAttendanceByEvent,
   getSatisfactionDistribution,
 } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
+import DashboardFilterBar from '../components/DashboardFilterBar'
 import OverviewTiles from '../components/OverviewTiles'
+import { hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import TrendsCard from '../components/TrendsCard'
 import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
@@ -38,14 +40,19 @@ function ChartMessage({ children, error = false }: { children: ReactNode; error?
 }
 
 export default function DashboardPage() {
+  // #25: every chart on the page follows the shared filter bar.
+  const filters = useDashboardFilterStore((state) => state.filters)
   const satisfaction = useQuery({
-    queryKey: ['dashboard', 'satisfaction'],
-    queryFn: getSatisfactionDistribution,
+    queryKey: ['dashboard', 'satisfaction', filters],
+    queryFn: () => getSatisfactionDistribution(filters),
+    placeholderData: keepPreviousData,
   })
   const attendance = useQuery({
-    queryKey: ['dashboard', 'attendance'],
-    queryFn: () => getAttendanceByEvent(10),
+    queryKey: ['dashboard', 'attendance', filters],
+    queryFn: () => getAttendanceByEvent(10, filters),
+    placeholderData: keepPreviousData,
   })
+  const totalResponses = satisfaction.data?.totalResponses
 
   return (
     <section>
@@ -56,6 +63,10 @@ export default function DashboardPage() {
       </p>
 
       <div className="mt-8">
+        <DashboardFilterBar />
+      </div>
+
+      <div className="mt-6">
         <OverviewTiles />
       </div>
 
@@ -65,15 +76,22 @@ export default function DashboardPage() {
       <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-2">
         <ChartCard
           title="Satisfaction distribution"
-          description={satisfaction.data ? `${satisfaction.data.totalResponses} responses` : 'Ratings from 1 to 5'}
+          description={
+            (typeof totalResponses === 'number' ? `${totalResponses} responses` : 'Ratings from 1 to 5') +
+            (hasPeopleFilter(filters) ? ' · not filtered by city, age or gender (feedback is anonymous)' : '')
+          }
         >
           {satisfaction.isLoading && <ChartMessage>Loading satisfaction data…</ChartMessage>}
           {satisfaction.error && <ChartMessage error>{getErrorMessage(satisfaction.error)}</ChartMessage>}
-          {satisfaction.data && satisfaction.data.totalResponses === 0 && (
-            <ChartMessage>No feedback responses yet.</ChartMessage>
+          {/* NFR-02: fewer than 5 responses (including none) are never shown */}
+          {satisfaction.data && totalResponses === null && (
+            <ChartMessage>Not enough data: fewer than 5 feedback responses match these filters.</ChartMessage>
           )}
-          {satisfaction.data && satisfaction.data.totalResponses > 0 && (
-            <SatisfactionDistributionChart data={satisfaction.data} />
+          {satisfaction.data && typeof totalResponses === 'number' && (
+            <>
+              <SatisfactionDistributionChart data={satisfaction.data} />
+              <p className="mt-2 text-xs text-slate-500">Ratings given by fewer than 5 people are hidden.</p>
+            </>
           )}
         </ChartCard>
 
@@ -84,7 +102,7 @@ export default function DashboardPage() {
           {attendance.isLoading && <ChartMessage>Loading attendance data…</ChartMessage>}
           {attendance.error && <ChartMessage error>{getErrorMessage(attendance.error)}</ChartMessage>}
           {attendance.data && attendance.data.events.length === 0 && (
-            <ChartMessage>No events available yet.</ChartMessage>
+            <ChartMessage>No events match these filters.</ChartMessage>
           )}
           {attendance.data && attendance.data.events.length > 0 && (
             <>
@@ -93,6 +111,7 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-400" />Accepted</span>
               </div>
               <AttendanceByEventChart data={attendance.data} />
+              <p className="mt-2 text-xs text-slate-500">Bars for fewer than 5 people are hidden.</p>
             </>
           )}
         </ChartCard>
