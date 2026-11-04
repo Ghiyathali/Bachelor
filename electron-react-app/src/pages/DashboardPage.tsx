@@ -7,7 +7,7 @@ import {
 import { getErrorMessage } from '../api/client'
 import DashboardFilterBar from '../components/DashboardFilterBar'
 import OverviewTiles from '../components/OverviewTiles'
-import { hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
+import { hasPeopleFilter, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import TrendsCard from '../components/TrendsCard'
 import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
@@ -46,11 +46,13 @@ export default function DashboardPage() {
     queryKey: ['dashboard', 'satisfaction', filters],
     queryFn: () => getSatisfactionDistribution(filters),
     placeholderData: keepPreviousData,
+    enabled: hasValidDateRange(filters),
   })
   const attendance = useQuery({
     queryKey: ['dashboard', 'attendance', filters],
     queryFn: () => getAttendanceByEvent(10, filters),
     placeholderData: keepPreviousData,
+    enabled: hasValidDateRange(filters),
   })
   const totalResponses = satisfaction.data?.totalResponses
 
