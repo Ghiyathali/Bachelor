@@ -147,3 +147,19 @@ export async function getReturningParticipants(filters: DashboardFilters = {}): 
   const { data } = await api.get<ReturningParticipants>('/api/dashboard/returning', { params: filters })
   return data
 }
+
+// FR-10: promotion channels. Mirrors PromotionChannelsResponse in PromotionChannelsController.cs.
+// Small channels are merged into "Other"; count null = fewer than 5 people (NFR-02).
+export interface ChannelCount {
+  channel: string
+  count: number | null
+}
+
+export interface PromotionChannels {
+  channels: ChannelCount[]
+}
+
+export async function getPromotionChannels(filters: DashboardFilters = {}): Promise<PromotionChannels> {
+  const { data } = await api.get<PromotionChannels>('/api/dashboard/channels', { params: filters })
+  return data
+}
