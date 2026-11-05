@@ -10,6 +10,7 @@ import OverviewTiles from '../components/OverviewTiles'
 import { hasPeopleFilter, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import TrendsCard from '../components/TrendsCard'
 import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
+import ReturningParticipantsCard from '../components/ReturningParticipantsCard'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
 import SatisfactionDistributionChart from '../components/charts/SatisfactionDistributionChart'
 
@@ -117,6 +118,11 @@ export default function DashboardPage() {
             </>
           )}
         </ChartCard>
+      </div>
+
+      {/* Who our participants are: FR-09 (and FR-10 next to it, #30) */}
+      <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-2">
+        <ReturningParticipantsCard />
       </div>
     </section>
   )

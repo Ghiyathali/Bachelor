@@ -128,3 +128,22 @@ export async function getEventTypeComparison(
   })
   return data
 }
+
+// FR-09: returning participants. Mirrors ReturningParticipantsResponse in ReturningParticipantsController.cs.
+// Per type only the percentage is sent (NFR-02); null = fewer than 5 answers.
+export interface ReturningByEventType {
+  eventTypeId: number | null
+  name: string
+  returningPercent: number | null
+}
+
+export interface ReturningParticipants {
+  answered: number | null
+  returningPercent: number | null
+  byEventType: ReturningByEventType[]
+}
+
+export async function getReturningParticipants(filters: DashboardFilters = {}): Promise<ReturningParticipants> {
+  const { data } = await api.get<ReturningParticipants>('/api/dashboard/returning', { params: filters })
+  return data
+}
