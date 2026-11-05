@@ -18,9 +18,9 @@ const QUICK_LINKS = [
     roles: QR_CODE_ROLES,
   },
   {
-    to: '/register',
-    title: 'Create account',
-    description: 'Create an account for a new staff member.',
+    to: '/accounts',
+    title: 'Manage accounts',
+    description: 'Create accounts, assign roles and deactivate staff access.',
     roles: ACCOUNT_ADMIN_ROLES,
   },
 ] as const

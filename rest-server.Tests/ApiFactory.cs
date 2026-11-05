@@ -10,47 +10,67 @@ using Testcontainers.PostgreSql;
 
 namespace RestServer.Tests;
 
-// Starts the real REST server in memory for the tests, backed by a throwaway
-// PostgreSQL database in Docker. The database is created before the first test
-// and deleted after the last one, so the shared Azure database is never touched.
+// Uses the configured Azure test database directly. CI falls back to Docker when
+// no connection is configured. Tests never create or drop an Azure database.
 public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    // The one Admin that exists in the test database (only creating accounts needs it).
-    public const string AdminUsername = "testadmin";
-    public const string AdminEmail = "testadmin@test.example";
-    public const string AdminPassword = "AdminPassword1";
+    // Unique per fixture so repeated runs against the same database cannot collide.
+    private readonly string _adminUsername = "testadmin" + Guid.NewGuid().ToString("N")[..12];
+    private const string AdminPassword = "AdminPassword1";
 
-    // Same PostgreSQL version as the team's docker-compose.yml.
-    private readonly PostgreSqlContainer _database = new PostgreSqlBuilder("postgres:17-alpine").Build();
+    // Capture once, before fixtures set process-wide connection settings for the API.
+    private static readonly string? ConfiguredConnectionString = LoadConfiguredConnectionString();
+    private string ConnectionString => ConfiguredConnectionString ?? _database!.GetConnectionString();
+    private PostgreSqlContainer? _database;
+
+    private static string? LoadConfiguredConnectionString()
+    {
+        var configured = Environment.GetEnvironmentVariable("ConnectionStrings__Postgres");
+        if (!string.IsNullOrWhiteSpace(configured)) return configured;
+
+        // Locate rest-server/.env regardless of the directory dotnet test was run from.
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            var envFile = Path.Combine(directory.FullName, "rest-server", ".env");
+            if (!File.Exists(envFile)) continue;
+            return DotNetEnv.Env.NoEnvVars().Load(envFile)
+                .FirstOrDefault(pair => pair.Key == "ConnectionStrings__Postgres").Value;
+        }
+        return null;
+    }
 
     public async Task InitializeAsync()
     {
-        await _database.StartAsync();
+        if (string.IsNullOrWhiteSpace(ConfiguredConnectionString))
+        {
+            _database = new PostgreSqlBuilder("postgres:17-alpine").Build();
+            await _database.StartAsync();
+        }
 
         // Program.cs reads these settings when it starts, so they are set as
         // environment variables (the same names as in rest-server/.env).
-        Environment.SetEnvironmentVariable("ConnectionStrings__Postgres", _database.GetConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__Postgres", ConnectionString);
         Environment.SetEnvironmentVariable("Jwt__Key", "test-only-signing-key-that-is-at-least-32-bytes");
 
         // #69: the PYN sync reads the mock PYN views in this same test database.
-        Environment.SetEnvironmentVariable("ConnectionStrings__PynSource", _database.GetConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__PynSource", ConnectionString);
         Environment.SetEnvironmentVariable("PynSync__ViewSchema", "pyn_mock_analytics");
 
         // Create the tables with the team's real EF Core migrations.
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_database.GetConnectionString())
+            .UseNpgsql(ConnectionString)
             .Options;
         await using var db = new AppDbContext(options);
         await db.Database.MigrateAsync();
 
         // Only an Admin may create accounts (#52), so the test database needs one Admin
         // to start with - written directly to the database, like DevSeeder does in Development.
-        // workFactor 4 = fastest bcrypt setting; fine for a throwaway test database.
+        // workFactor 4 keeps integration-test setup fast.
         var adminRole = await db.Roles.SingleAsync(role => role.Name == "Admin");
         db.Accounts.Add(new Account
         {
-            Username = AdminUsername,
-            Email = AdminEmail,
+            Username = _adminUsername,
+            Email = _adminUsername + "@test.example",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(AdminPassword, workFactor: 4),
             RoleId = adminRole.Id,
         });
@@ -79,18 +99,18 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     }
 
     public Task<HttpClient> CreateAdminClientAsync() =>
-        CreateLoggedInClientAsync(AdminUsername, AdminPassword);
+        CreateLoggedInClientAsync(_adminUsername, AdminPassword);
 
     private record TokenBody(string Token);
 
     // #69: a fresh AppDbContext on the test database, to check what the API wrote.
     public AppDbContext CreateDbContext() =>
-        new(new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(_database.GetConnectionString()).Options);
+        new(new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(ConnectionString).Options);
 
     // #69: runs SQL on the test database - the mock PYN script, or a change "at PYN".
     public async Task ExecuteSqlAsync(string sql)
     {
-        await using var connection = new NpgsqlConnection(_database.GetConnectionString());
+        await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
@@ -104,6 +124,6 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     async Task IAsyncLifetime.DisposeAsync()
     {
         await base.DisposeAsync();
-        await _database.DisposeAsync();
+        if (_database is not null) await _database.DisposeAsync();
     }
 }

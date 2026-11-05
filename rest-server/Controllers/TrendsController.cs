@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ public record TrendsResponse(string Interval, IReadOnlyList<TrendPoint> Periods)
 
 [ApiController]
 [Route("api/dashboard/trends")]
-[Authorize(Roles = "Admin,Event Manager")]
+[Authorize(Roles = RoleNames.Analytics)]
 public class TrendsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

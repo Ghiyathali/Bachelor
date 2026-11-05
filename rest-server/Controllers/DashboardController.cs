@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +44,7 @@ public record FilterOptionsResponse(
 
 [ApiController]
 [Route("api/dashboard")]
-[Authorize(Roles = "Admin,Event Manager")]
+[Authorize(Roles = RoleNames.Analytics)]
 public class DashboardController(AppDbContext db) : ControllerBase
 {
     [HttpGet("overview")]

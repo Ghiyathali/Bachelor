@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ public record PynSyncRunResponse(
 // #69: run the PYN sync now, and see the last run. Admin only.
 [ApiController]
 [Route("api/admin/pyn-sync")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RoleNames.Admin)]
 public class PynSyncController(PynSyncService sync, AppDbContext db) : ControllerBase
 {
     // POST /api/admin/pyn-sync - "Sync now".

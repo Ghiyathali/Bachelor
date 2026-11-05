@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +15,13 @@ public record SaveEventTypeRequest([Required, MaxLength(100)] string Name);
 
 // #53: event categories (e.g. Workshop, Sports) for the type filter (FR-05) and the
 // type comparison (FR-08). Stored as data, so PYN can change them without a developer.
-// Any logged-in user may read the list; only Admin and Event Manager may change it.
+// Analytics roles may read the list; only Admin and Event Manager may change it.
 [ApiController]
 [Route("api/event-types")]
-[Authorize]
+[Authorize(Roles = RoleNames.Analytics)]
 public class EventTypesController(AppDbContext db) : ControllerBase
 {
-    private const string ManagerRoles = "Admin,Event Manager";
+    private const string ManagerRoles = RoleNames.EventManagement;
 
     // GET /api/event-types
     [HttpGet]

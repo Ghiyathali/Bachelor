@@ -6,8 +6,10 @@ import {
   createRouter,
   redirect,
 } from '@tanstack/react-router'
+import { refreshSession } from './auth/session'
 import App from './App'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, currentUserHasRole } from './auth/permissions'
+import AccountsPage from './pages/AccountsPage'
+import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -16,18 +18,19 @@ import RegisterPage from './pages/RegisterPage'
 import { isLoggedIn, useAuthStore } from './stores/authStore'
 
 // Guard for protected pages: no valid token -> go to /login.
-function requireAuth() {
+async function requireAuth() {
   if (!isLoggedIn()) {
     useAuthStore.getState().logout() // clear an expired token, if any
     throw redirect({ to: '/login' })
   }
+  await refreshSession()
 }
 
 // Guard for role-restricted pages: logged in, but wrong role -> go to the home page.
 function requireRole(allowed: readonly string[]) {
-  return () => {
-    requireAuth()
-    if (!currentUserHasRole(allowed)) {
+  return async () => {
+    await requireAuth()
+    if (!hasRole(useAuthStore.getState().user?.role, allowed)) {
       throw redirect({ to: '/' })
     }
   }
@@ -110,6 +113,13 @@ const registerRoute = createRoute({
   component: RegisterPage,
 })
 
+const accountsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'accounts',
+  beforeLoad: requireRole(ACCOUNT_ADMIN_ROLES),
+  component: AccountsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   dashboardRoute,
@@ -117,6 +127,7 @@ const routeTree = rootRoute.addChildren([
   qrCodeRoute,
   loginRoute,
   registerRoute,
+  accountsRoute,
 ])
 
 export const router = createRouter({
