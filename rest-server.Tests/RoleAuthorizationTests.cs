@@ -29,6 +29,7 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         ("GET", "/api/dashboard/attendance", RoleNames.Analytics, null),
         ("GET", "/api/dashboard/trends", RoleNames.Analytics, null),
         ("GET", "/api/dashboard/event-types", RoleNames.Analytics, null),
+        ("GET", "/api/dashboard/returning", RoleNames.Analytics, null),
         ("GET", "/api/event-types", RoleNames.Analytics, null),
         ("POST", "/api/event-types", RoleNames.EventManagement, new { name = "" }),
         ("PUT", "/api/event-types/2147483647", RoleNames.EventManagement, new { name = "Test" }),
