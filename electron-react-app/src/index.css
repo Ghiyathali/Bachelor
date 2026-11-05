@@ -11,3 +11,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* Native modal dialogs make the page inert; also lock its scroll containers. */
+:root:has(dialog[open]),
+:root:has(dialog[open]) body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}

@@ -14,6 +14,7 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
   onDeleted: () => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
+  const backdropPointerDown = useRef(false)
   const cancelDelete = useRef<HTMLButtonElement>(null)
   const deleteButton = useRef<HTMLButtonElement>(null)
   const [username, setUsername] = useState(account.username)
@@ -41,12 +42,21 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
     setConfirmDelete(false)
     requestAnimationFrame(() => deleteButton.current?.focus())
   }
+  function outsideDialog(event: { currentTarget: HTMLDialogElement; clientX: number; clientY: number }) {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    return event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom
+  }
   const inputClass = 'mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-white disabled:opacity-50'
   return (
-    <dialog ref={dialog} aria-labelledby="account-dialog-title" aria-describedby="account-dialog-description" onCancel={event => {
+    <dialog ref={dialog} aria-labelledby="account-dialog-title" aria-describedby="account-dialog-description" onPointerDown={event => {
+      backdropPointerDown.current = event.target === event.currentTarget && outsideDialog(event)
+    }} onClick={event => {
+      if (!busy && backdropPointerDown.current && event.target === event.currentTarget && outsideDialog(event)) onClose()
+      backdropPointerDown.current = false
+    }} onCancel={event => {
       event.preventDefault()
       if (!busy) { if (confirmDelete) backToEditing(); else onClose() }
-    }} className="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-xl backdrop:bg-black/70">
+    }} className="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overscroll-contain rounded-xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-xl backdrop:bg-black/70">
       <div hidden={confirmDelete}>
         <h2 id={confirmDelete ? undefined : 'account-dialog-title'} className="text-2xl font-bold">Edit account</h2>
         <p id={confirmDelete ? undefined : 'account-dialog-description'} className="mt-2 break-words text-sm text-slate-400">Update account details for {account.username}.</p>

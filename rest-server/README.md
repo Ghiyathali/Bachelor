@@ -1,5 +1,8 @@
 # ASP.NET Core REST server + PostgreSQL
 
+See [the permission matrix](../PERMISSIONS.md) for roles, account administration,
+and integration tests using the configured Azure test database.
+
 ## Configure PostgreSQL
 
 The API uses EF Core with the Npgsql PostgreSQL provider. Copy `.env.example` to
@@ -62,9 +65,9 @@ Event management and dashboard endpoints still require a JWT bearer token.
   inclusion ratings (1-5), plus optional worked-well, improvement, and general
   comments.
 - `GET /api/dashboard/satisfaction?eventId={eventId}` returns only aggregated
-  1-5 rating buckets (Admin or Event Manager).
+  1-5 rating buckets (Admin, Event Manager or Marketing Manager).
 - `GET /api/dashboard/attendance?limit=10` returns only registered and attended
-  totals for recent events (Admin or Event Manager). A registration remains part
+  totals for recent events (Admin, Event Manager or Marketing Manager). A registration remains part
   of the registered total after it is marked attended; cancelled registrations
   are excluded.
 
@@ -76,7 +79,7 @@ Events can have an optional type (for example Workshop or Sports), used by the
 type filter (FR-05) and the type comparison (FR-08). Types are stored as data,
 so they can be changed in the app without a code change.
 
-- `GET /api/event-types` lists all types (any logged-in user).
+- `GET /api/event-types` lists all types (Admin, Event Manager or Marketing Manager).
 - `POST /api/event-types`, `PUT /api/event-types/{id}` and
   `DELETE /api/event-types/{id}` add, rename and delete types (Admin or Event
   Manager). Deleting a type keeps its events; they simply have no type.
@@ -95,7 +98,7 @@ starting the API, otherwise startup fails because the `EventTypes` table is miss
 ### Trends over time
 
 `GET /api/dashboard/trends?interval=month&from=2035-01-01&to=2035-04-30&eventId=1`
-requires Admin or Event Manager. All filters are optional; `interval` defaults to
+requires Admin, Event Manager or Marketing Manager. All filters are optional; `interval` defaults to
 `month` and also accepts `season`. Dates filter the event's start date in UTC,
 including both boundary dates. Without dates the range spans matching events.
 Explicit dates preserve leading/trailing gaps. Ranges are limited to 100 years.
