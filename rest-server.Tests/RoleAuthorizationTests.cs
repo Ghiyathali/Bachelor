@@ -19,6 +19,7 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         ("GET", "/api/auth/me", RoleNames.All, null),
         ("POST", "/api/auth/register", RoleNames.Admin, new { email = "bad", username = "x", password = "x" }),
         ("GET", "/api/admin/accounts", RoleNames.Admin, null),
+        ("DELETE", "/api/admin/accounts/2147483647", RoleNames.Admin, null),
         ("PUT", "/api/admin/accounts/2147483647", RoleNames.Admin, new { role = RoleNames.StandardUser, isActive = false }),
         ("GET", "/api/admin/pyn-sync/last", RoleNames.Admin, null),
         // Uses the disposable database as its mock PYN source.

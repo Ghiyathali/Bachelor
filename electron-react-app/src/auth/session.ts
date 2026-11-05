@@ -7,7 +7,7 @@ export async function refreshSession() {
   if (!token || !expiresAt) return
   const { data } = await api.get<AuthUser>('/api/auth/me')
   const current = useAuthStore.getState()
-  if (current.token === token && current.user?.role !== data.role) {
+  if (current.token === token && (current.user?.role !== data.role || current.user?.username !== data.username || current.user?.email !== data.email)) {
     current.setSession(token, expiresAt, data)
   }
 }

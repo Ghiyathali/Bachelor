@@ -4,11 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestServer.Auth;
 using RestServer.Data;
+using Npgsql;
 
 namespace RestServer.Controllers;
 
 public record AccountResponse(int Id, string Username, string Email, string Role, bool IsActive);
-public record UpdateAccountRequest([Required] string Role, bool IsActive);
+public record UpdateAccountRequest(
+    [Required] string Role,
+    bool IsActive,
+    [MinLength(3), MaxLength(30), RegularExpression(@"^[^@\s]+$", ErrorMessage = "Username cannot contain '@' or spaces.")]
+    string? Username = null,
+    [EmailAddress, MaxLength(256)] string? Email = null);
 
 [ApiController]
 [Route("api/admin/accounts")]
@@ -33,9 +39,38 @@ public class AccountsController(AppDbContext db) : ControllerBase
             (!request.IsActive || request.Role != RoleNames.Admin))
             return Conflict(new { message = "Another administrator must change your administrative access." });
 
+        var username = request.Username?.Trim().ToLowerInvariant() ?? account.Username;
+        var email = request.Email?.Trim().ToLowerInvariant() ?? account.Email;
+        if (await db.Accounts.AnyAsync(a => a.Id != id && a.Username.ToLower() == username))
+            return Conflict(new { message = "This username is already taken." });
+        if (await db.Accounts.AnyAsync(a => a.Id != id && a.Email.ToLower() == email))
+            return Conflict(new { message = "This email is already registered." });
+
+        account.Username = username;
+        account.Email = email;
         account.Role = role;
         account.IsActive = request.IsActive;
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            return Conflict(new { message = "Email or username is already taken." });
+        }
         return Ok(new AccountResponse(account.Id, account.Username, account.Email, role.Name, account.IsActive));
     }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        if (User.FindFirst("sub")?.Value == id.ToString())
+            return Conflict(new { message = "Another administrator must delete your account." });
+        var account = await db.Accounts.SingleOrDefaultAsync(a => a.Id == id);
+        if (account is null) return NotFound();
+        db.Accounts.Remove(account);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
 }

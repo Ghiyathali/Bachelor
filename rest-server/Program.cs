@@ -62,8 +62,11 @@ builder.Services
                 }
                 // Never trust a role from a token issued before an administrator changed it.
                 var identity = (ClaimsIdentity)context.Principal!.Identity!;
-                foreach (var claim in identity.FindAll("role").ToList()) identity.RemoveClaim(claim);
+                foreach (var type in new[] { "role", "username", "email" })
+                    foreach (var claim in identity.FindAll(type).ToList()) identity.RemoveClaim(claim);
                 identity.AddClaim(new Claim("role", account.Role.Name));
+                identity.AddClaim(new Claim("username", account.Username));
+                identity.AddClaim(new Claim("email", account.Email));
             },
         };
         options.MapInboundClaims = false; // keep our short claim names: "sub", "role", ...
