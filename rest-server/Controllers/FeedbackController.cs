@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using RestServer.Auth;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -31,6 +33,7 @@ public record FeedbackResponse(
 [Route("api/events/{eventId:int}/feedback")]
 public class FeedbackController(AppDbContext db) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost]
     [EnableRateLimiting("feedback")] // max 20 submissions per minute per IP (see Program.cs)
     public async Task<ActionResult<FeedbackResponse>> Create(

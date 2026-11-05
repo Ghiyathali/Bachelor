@@ -1,11 +1,24 @@
-import { Link, Outlet, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { refreshSession } from './auth/session'
+import { Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 
 export default function App() {
   const navigate = useNavigate()
+  const router = useRouter()
+  const token = useAuthStore(state => state.token)
+  useEffect(() => {
+    if (!token) return
+    const refresh = () => { void refreshSession().catch(() => {}) }
+    const timer = window.setInterval(refresh, 15000)
+    window.addEventListener('focus', refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+  }, [token])
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+
+  useEffect(() => { void router.invalidate() }, [user?.role, router])
 
   async function handleLogout() {
     logout() // 1. throw the token away (FR-16)
@@ -44,11 +57,11 @@ export default function App() {
               {/* #52: only Admins create accounts */}
               {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && (
                 <Link
-                  to="/register"
+                  to="/accounts"
                   className="text-sm font-medium text-slate-300 transition hover:text-white"
                   activeProps={{ className: 'text-white' }}
                 >
-                  Create account
+                  Manage accounts
                 </Link>
               )}
               <Link

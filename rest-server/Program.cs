@@ -1,4 +1,6 @@
 using System.Text;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.RateLimiting;                 // NEW: FixedWindowRateLimiterOptions, RateLimitPartition
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +43,32 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                if (!int.TryParse(context.Principal?.FindFirst("sub")?.Value, out var id))
+                {
+                    context.Fail("Invalid account.");
+                    return;
+                }
+                var account = await db.Accounts.AsNoTracking().Include(a => a.Role)
+                    .SingleOrDefaultAsync(a => a.Id == id, context.HttpContext.RequestAborted);
+                if (account is null || !account.IsActive)
+                {
+                    context.Fail("Account is inactive.");
+                    return;
+                }
+                // Never trust a role from a token issued before an administrator changed it.
+                var identity = (ClaimsIdentity)context.Principal!.Identity!;
+                foreach (var type in new[] { "role", "username", "email" })
+                    foreach (var claim in identity.FindAll(type).ToList()) identity.RemoveClaim(claim);
+                identity.AddClaim(new Claim("role", account.Role.Name));
+                identity.AddClaim(new Claim("username", account.Username));
+                identity.AddClaim(new Claim("email", account.Email));
+            },
+        };
         options.MapInboundClaims = false; // keep our short claim names: "sub", "role", ...
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -56,7 +84,8 @@ builder.Services
             ClockSkew = TimeSpan.FromSeconds(30),
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 // ---------- PYN sync (#69) ----------
 // Reads PYN's anonymised views and copies them into our tables (design "PYN Data Integration").

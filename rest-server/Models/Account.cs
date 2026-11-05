@@ -8,6 +8,8 @@ public class Account
     public required string PasswordHash { get; set; }
     public required string Email { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     public int RoleId { get; set; }
 
     // Not "required": we create accounts by setting RoleId only.

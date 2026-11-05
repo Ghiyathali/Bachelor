@@ -31,15 +31,29 @@ public class PynSyncEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory
     {
         await factory.CreatePynMockAsync();
 
-        // 1. First run: everything is new.
+        // Azure keeps data between runs. Assert insert counts against the existing
+        // mock records, rather than assuming an empty destination database.
+        await using var baseline = factory.CreateDbContext();
+        var eventIds = await baseline.Database.SqlQueryRaw<Guid>(
+            "SELECT id AS \"Value\" FROM pyn_mock_analytics.events").ToArrayAsync();
+        var registrationIds = await baseline.Database.SqlQueryRaw<long>(
+            "SELECT id AS \"Value\" FROM pyn_mock_analytics.event_registrations WHERE id < 9000").ToArrayAsync();
+        var existingEvents = await baseline.Events.CountAsync(e => e.ExternalId.HasValue && eventIds.Contains(e.ExternalId.Value));
+        var existingRegistrations = await baseline.EventRegistrations.CountAsync(r => r.ExternalId.HasValue && registrationIds.Contains(r.ExternalId.Value));
+        var topics = await baseline.Database.SqlQueryRaw<string>(
+            "SELECT DISTINCT lower(trim(topic)) AS \"Value\" FROM pyn_mock_analytics.events WHERE topic IS NOT NULL").ToArrayAsync();
+        var existingTopics = await baseline.EventTypes.Select(t => t.Name.ToLower()).ToArrayAsync();
+        var missingTopics = topics.Except(existingTopics).Count();
+
+        // 1. First run: insert missing mock records and update existing ones.
         var first = await SyncNow();
         Assert.True(first.Succeeded, first.Error);
         Assert.Equal(8, first.EventsRead);                    // the draft is not in the view
-        Assert.Equal(8, first.EventsInserted);
+        Assert.Equal(8 - existingEvents, first.EventsInserted);
         Assert.Equal(0, first.EventsSkipped);
-        Assert.Equal(1, first.EventTypesCreated);             // "Language café"; "workshop" = existing "Workshop"
+        Assert.Equal(missingTopics, first.EventTypesCreated);
         Assert.Equal(144, first.RegistrationsRead);
-        Assert.Equal(141, first.RegistrationsInserted);
+        Assert.Equal(141 - existingRegistrations, first.RegistrationsInserted);
         Assert.Equal(2, first.RegistrationsEventNotFound);    // "Raggeaton" typo + draft event
         Assert.Equal(1, first.RegistrationsEventAmbiguous);   // same title twice, no date
         Assert.Equal(0, first.RegistrationsUnknownStatus);
@@ -47,7 +61,7 @@ public class PynSyncEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory
         // 2. Staff open feedback for a synced event in OUR app.
         await using (var db = factory.CreateDbContext())
         {
-            var dramaLab = await db.Events.SingleAsync(eventItem => eventItem.Name == "Drama Lab");
+            var dramaLab = await db.Events.SingleAsync(eventItem => eventItem.ExternalId == Guid.Parse("00000000-0000-4000-8000-000000000004"));
             dramaLab.IsFeedbackOpen = true;
             await db.SaveChangesAsync();
         }
@@ -69,16 +83,16 @@ public class PynSyncEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory
 
         // 5. What ended up in OUR tables.
         await using var check = factory.CreateDbContext();
-        Assert.Equal(141, await check.EventRegistrations.CountAsync(registration => registration.ExternalId != null));
+        Assert.Equal(141, await check.EventRegistrations.CountAsync(registration => registration.ExternalId.HasValue && registrationIds.Contains(registration.ExternalId.Value)));
         Assert.Equal(RegistrationStatus.Accepted,
             (await check.EventRegistrations.SingleAsync(registration => registration.ExternalId == 1003)).Status);
-        Assert.False(await check.Events.AnyAsync(eventItem => eventItem.Name == "Halloween Party"));   // draft
-        Assert.True((await check.Events.SingleAsync(eventItem => eventItem.Name == "Drama Lab")).IsFeedbackOpen);
+        Assert.False(await check.Events.AnyAsync(eventItem => eventItem.ExternalId == Guid.Parse("00000000-0000-4000-8000-000000000008")));   // draft
+        Assert.True((await check.Events.SingleAsync(eventItem => eventItem.ExternalId == Guid.Parse("00000000-0000-4000-8000-000000000004"))).IsFeedbackOpen);
         Assert.Equal(1, await check.EventTypes.CountAsync(eventType => eventType.Name.ToLower() == "workshop"));
         Assert.True(await check.EventTypes.AnyAsync(eventType => eventType.Name == "Language café"));
 
         var cities = await check.EventRegistrations
-            .Where(registration => registration.ExternalId != null)
+            .Where(registration => registration.ExternalId.HasValue && registrationIds.Contains(registration.ExternalId.Value))
             .Select(registration => registration.City)
             .Distinct()
             .ToListAsync();

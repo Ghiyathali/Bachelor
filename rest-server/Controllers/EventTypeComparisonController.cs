@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ public record EventTypeComparisonResponse(IReadOnlyList<EventTypeComparison> Typ
 
 [ApiController]
 [Route("api/dashboard/event-types")]
-[Authorize(Roles = "Admin,Event Manager")]
+[Authorize(Roles = RoleNames.Analytics)]
 public class EventTypeComparisonController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

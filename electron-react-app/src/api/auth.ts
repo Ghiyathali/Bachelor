@@ -5,6 +5,7 @@ export interface RegisterRequest {
   email: string
   username: string
   password: string
+  role?: string
 }
 
 export interface RegisterResponse {
@@ -35,4 +36,26 @@ export async function register(body: RegisterRequest): Promise<RegisterResponse>
 export async function login(body: LoginRequest): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>('/api/auth/login', body)
   return data
+}
+
+export interface Account {
+  id: number
+  username: string
+  email: string
+  role: string
+  isActive: boolean
+}
+
+export async function listAccounts(): Promise<Account[]> {
+  return (await api.get<Account[]>('/api/admin/accounts')).data
+}
+
+export type UpdateAccount = Pick<Account, 'username' | 'email' | 'role' | 'isActive'>
+
+export async function updateAccount(id: number, body: UpdateAccount): Promise<Account> {
+  return (await api.put<Account>(`/api/admin/accounts/${id}`, body)).data
+}
+
+export async function deleteAccount(id: number): Promise<void> {
+  await api.delete(`/api/admin/accounts/${id}`)
 }

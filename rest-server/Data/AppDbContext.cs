@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RestServer.Models;
+using RestServer.Auth;
 
 namespace RestServer.Data;
 
@@ -22,14 +23,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(role => role.Name).HasMaxLength(100);
             entity.HasIndex(role => role.Name).IsUnique();
             entity.HasData(
-                new Role { Id = 1, Name = "Admin" },
-                new Role { Id = 2, Name = "Event Manager" },
-                new Role { Id = 3, Name = "Marketing Manager" },
-                new Role { Id = 4, Name = "Standard User" });
+                new Role { Id = 1, Name = RoleNames.Admin },
+                new Role { Id = 2, Name = RoleNames.EventManager },
+                new Role { Id = 3, Name = RoleNames.MarketingManager },
+                new Role { Id = 4, Name = RoleNames.StandardUser });
         });
 
         modelBuilder.Entity<Account>(entity =>
         {
+            entity.Property(account => account.IsActive).HasDefaultValue(true);
             entity.Property(account => account.Username).HasMaxLength(100);
             entity.Property(account => account.Email).HasMaxLength(256);
             entity.Property(account => account.PasswordHash).HasMaxLength(512);

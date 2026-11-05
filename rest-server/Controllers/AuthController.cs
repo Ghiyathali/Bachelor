@@ -21,7 +21,8 @@ public record RegisterRequest(
     string Username,
 
     [Required, MinLength(8), MaxLength(72)]   // bcrypt only uses the first 72 bytes
-    string Password);
+    string Password,
+    string Role = RoleNames.StandardUser);
 
 public record RegisterResponse(int Id, string Username, string Email, string Role);
 
@@ -34,9 +35,6 @@ public record LoginResponse(string Token, DateTimeOffset ExpiresAt, string Usern
 [Route("api/auth")]
 public class AuthController(AppDbContext db, TokenService tokens) : ControllerBase
 {
-    // The lowest of the four roles in FR-12 (seeded in AppDbContext.cs).
-    private const string DefaultRoleName = "Standard User";
-
     // A real bcrypt hash of a random value. Used when the account does not exist,
     // so "unknown user" takes as long as "wrong password" - attackers can't tell them apart by timing.
     private static readonly string DummyHash =
@@ -48,7 +46,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
     // and the API is reachable from the internet, so self-registration would let
     // anyone create an account. No token -> 401, token without the Admin role -> 403.
     [HttpPost("register")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleNames.Admin)]
     public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request)
     {
         // Store in lower-case so "Yami" and "yami" are the same account.
@@ -61,15 +59,16 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
         if (await db.Accounts.AnyAsync(a => a.Username.ToLower() == username))
             return Conflict(new { message = "This username is already taken." });
 
-        // Every new account gets the lowest role. Choosing a role is part of #32.
-        var defaultRole = await db.Roles.SingleAsync(r => r.Name == DefaultRoleName);
+        var role = await db.Roles.SingleOrDefaultAsync(r => r.Name == request.Role);
+        if (role is null)
+            return BadRequest(new { message = "Unknown role." });
 
         var account = new Account
         {
             Email = email,
             Username = username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
-            RoleId = defaultRole.Id,
+            RoleId = role.Id,
         };
 
         db.Accounts.Add(account);
@@ -86,7 +85,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
 
         // 201 Created. We never send the password or hash back.
         return StatusCode(StatusCodes.Status201Created,
-            new RegisterResponse(account.Id, account.Username, account.Email, defaultRole.Name));
+            new RegisterResponse(account.Id, account.Username, account.Email, role.Name));
     }
 
     // ---------- LOGIN ----------
@@ -106,7 +105,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
         var passwordOk = BCrypt.Net.BCrypt.Verify(request.Password, account?.PasswordHash ?? DummyHash);
 
         // Same answer for "no such user" and "wrong password" - never reveal which one.
-        if (account is null || !passwordOk)
+        if (account is null || !account.IsActive || !passwordOk)
             return Unauthorized(new { message = "Invalid username/email or password." });
 
         var (token, expiresAt) = tokens.CreateToken(account);
@@ -116,7 +115,7 @@ public class AuthController(AppDbContext db, TokenService tokens) : ControllerBa
     // ---------- PROTECTED TEST ----------
     // GET /api/auth/me - only works with a valid token.
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Roles = RoleNames.All)]
     public IActionResult Me() => Ok(new
     {
         id = User.FindFirst("sub")?.Value,

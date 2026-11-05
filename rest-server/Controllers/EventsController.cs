@@ -1,3 +1,4 @@
+using RestServer.Auth;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,7 @@ public record SetEventTypeRequest(int? EventTypeId);
 [Route("api/events")]
 public class EventsController(AppDbContext db) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EventResponse>>> GetAll(
         [FromQuery] bool feedbackOpenOnly = true)
@@ -50,6 +52,7 @@ public class EventsController(AppDbContext db) : ControllerBase
             .ToListAsync());
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EventResponse>> GetById(int id)
     {
@@ -61,7 +64,7 @@ public class EventsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Event Manager")]
+    [Authorize(Roles = RoleNames.EventManagement)]
     public async Task<ActionResult<EventResponse>> Create(CreateEventRequest request)
     {
         var name = request.Name.Trim();
@@ -96,7 +99,7 @@ public class EventsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPatch("{id:int}/feedback-status")]
-    [Authorize(Roles = "Admin,Event Manager")]
+    [Authorize(Roles = RoleNames.EventManagement)]
     public async Task<ActionResult<EventResponse>> SetFeedbackStatus(
         int id,
         SetFeedbackStatusRequest request)
@@ -115,7 +118,7 @@ public class EventsController(AppDbContext db) : ControllerBase
 
     // #53: set or clear the type of an existing event.
     [HttpPatch("{id:int}/event-type")]
-    [Authorize(Roles = "Admin,Event Manager")]
+    [Authorize(Roles = RoleNames.EventManagement)]
     public async Task<ActionResult<EventResponse>> SetEventType(
         int id,
         SetEventTypeRequest request)

@@ -1,9 +1,7 @@
-import { useAuthStore } from '../stores/authStore'
-
 // Which roles may generate and print the QR code (FR-12).
 // The names must match the roles seeded in the backend (AppDbContext.cs).
 export const QR_CODE_ROLES = ['Admin', 'Event Manager'] as const
-export const DASHBOARD_ROLES = ['Admin', 'Event Manager'] as const
+export const DASHBOARD_ROLES = ['Admin', 'Event Manager', 'Marketing Manager'] as const
 // Only an Admin may create accounts (#52). The backend enforces the same rule.
 export const ACCOUNT_ADMIN_ROLES = ['Admin'] as const
 
@@ -12,7 +10,4 @@ export function hasRole(role: string | undefined, allowed: readonly string[]): b
   return role !== undefined && allowed.includes(role)
 }
 
-// Same check, reading the current user straight from the auth store.
-export function currentUserHasRole(allowed: readonly string[]): boolean {
-  return hasRole(useAuthStore.getState().user?.role, allowed)
-}
+export const ROLES = ['Admin', 'Event Manager', 'Marketing Manager', 'Standard User'] as const

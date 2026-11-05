@@ -51,6 +51,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Role permission tests
+        run: npm test
+
       - name: Type-check
         run: npm run typecheck
 

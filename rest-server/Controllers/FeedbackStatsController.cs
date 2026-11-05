@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using RestServer.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestServer.Data;
@@ -12,6 +14,7 @@ public record FeedbackStatsResponse(int ResponsesThisMonth, int MonthlyGoal);
 [Route("api/feedback/stats")]
 public class FeedbackStatsController(AppDbContext db, IConfiguration config) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<FeedbackStatsResponse>> Get()
     {
