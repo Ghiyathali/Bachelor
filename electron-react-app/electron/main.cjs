@@ -42,6 +42,46 @@ ipcMain.handle('save-pdf', async (event) => {
   return { saved: true, filePath }
 })
 
+// Turns the report's SVG into a one-page A4 PDF: an invisible window shows only the SVG and
+// Chromium prints it. JavaScript is off there, because that window only has to display a picture.
+/** @param {string} svg */
+async function svgToPdf(svg) {
+  const pdfWindow = new BrowserWindow({
+    show: false,
+    webPreferences: { javascript: false, sandbox: true },
+  })
+  try {
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+      @page { size: A4; margin: 0 }
+      html, body { margin: 0 }
+      svg { display: block; width: 210mm; height: 296mm }
+    </style></head><body>${svg}</body></html>`
+    await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+    return await pdfWindow.webContents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true })
+  } finally {
+    pdfWindow.destroy()
+  }
+}
+
+// FR-11: ask where to save the impact report, then write it as an SVG or a PDF.
+ipcMain.handle('save-report', async (event, { format, svg, fileName }) => {
+  if ((format !== 'svg' && format !== 'pdf') || typeof svg !== 'string') {
+    throw new Error('Invalid report')
+  }
+  const window = BrowserWindow.fromWebContents(event.sender)
+  const options = {
+    defaultPath: fileName,
+    filters: [{ name: format.toUpperCase(), extensions: [format] }],
+  }
+  const { canceled, filePath } = window
+    ? await dialog.showSaveDialog(window, options)
+    : await dialog.showSaveDialog(options)
+  if (canceled || !filePath) return { saved: false }
+
+  await fs.writeFile(filePath, format === 'pdf' ? await svgToPdf(svg) : svg)
+  return { saved: true, filePath }
+})
+
 app.whenReady().then(() => {
   createWindow()
   app.on('activate', () => {

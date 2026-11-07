@@ -2,22 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { getFilterOptions } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
-import { hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
-
-// The enum names from the backend, shown in a readable form.
-const AGE_BAND_LABELS: Record<string, string> = {
-  Under18: 'Under 18',
-  From18To24: '18–24',
-  From25To30: '25–30',
-  Over30: '31 and older',
-}
-
-const SEASON_LABELS: Record<string, string> = {
-  Winter: 'Winter (Dec–Feb)',
-  Spring: 'Spring (Mar–May)',
-  Summer: 'Summer (Jun–Aug)',
-  Autumn: 'Autumn (Sep–Nov)',
-}
+import { AGE_BAND_LABELS, SEASON_LABELS, hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 
 const inputClass =
   'mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 [color-scheme:dark]'
