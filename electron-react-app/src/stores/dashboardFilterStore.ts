@@ -1,4 +1,20 @@
 import { create } from 'zustand'
+import type { FilterOptions } from '../api/dashboard'
+
+// The enum names from the backend, shown in a readable form.
+export const AGE_BAND_LABELS: Record<string, string> = {
+  Under18: 'Under 18',
+  From18To24: '18–24',
+  From25To30: '25–30',
+  Over30: '31 and older',
+}
+
+export const SEASON_LABELS: Record<string, string> = {
+  Winter: 'Winter (Dec–Feb)',
+  Spring: 'Spring (Mar–May)',
+  Summer: 'Summer (Jun–Aug)',
+  Autumn: 'Autumn (Sep–Nov)',
+}
 
 // #25 / FR-05: the dashboard filter bar. One shared "memory" for the chosen filters,
 // so every tile and chart on the dashboard reads the same values.
@@ -53,4 +69,25 @@ export function hasValidDateRange(filters: DashboardFilters): boolean {
 // City, age band and gender only apply to sign-ups: feedback is anonymous.
 export function hasPeopleFilter(filters: DashboardFilters): boolean {
   return Boolean(filters.city || filters.ageBand || filters.gender)
+}
+
+// #31: the chosen filters in words, printed on the exported report.
+export function describeFilters(
+  filters: DashboardFilters,
+  options: Pick<FilterOptions, 'events' | 'eventTypes'>,
+): string[] {
+  const nameOf = (list: { id: number; name: string }[], id: number) =>
+    list.find((item) => item.id === id)?.name ?? `#${id}`
+  const summary: string[] = []
+  if (filters.from) summary.push(`From: ${filters.from}`)
+  if (filters.to) summary.push(`To: ${filters.to}`)
+  if (filters.season) summary.push(`Season: ${SEASON_LABELS[filters.season] ?? filters.season}`)
+  if (filters.eventId !== undefined) summary.push(`Event: ${nameOf(options.events, filters.eventId)}`)
+  if (filters.eventTypeId !== undefined) summary.push(`Event type: ${nameOf(options.eventTypes, filters.eventTypeId)}`)
+  if (filters.city) summary.push(`City: ${filters.city}`)
+  if (filters.ageBand) summary.push(`Age band: ${AGE_BAND_LABELS[filters.ageBand] ?? filters.ageBand}`)
+  if (filters.gender) summary.push(`Gender: ${filters.gender}`)
+  // Feedback is anonymous, so a reader must know these filters do not apply to it.
+  if (hasPeopleFilter(filters)) summary.push('City, age band and gender do not apply to feedback numbers')
+  return summary
 }

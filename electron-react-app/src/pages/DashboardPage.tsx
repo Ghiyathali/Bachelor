@@ -6,6 +6,7 @@ import {
 } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
 import DashboardFilterBar from '../components/DashboardFilterBar'
+import ExportReportButtons from '../components/ExportReportButtons'
 import OverviewTiles from '../components/OverviewTiles'
 import { hasPeopleFilter, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import TrendsCard from '../components/TrendsCard'
@@ -60,11 +61,16 @@ export default function DashboardPage() {
 
   return (
     <section>
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Insights</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">Dashboard</h1>
-      <p className="mt-3 max-w-2xl text-slate-300">
-        Aggregated feedback and attendance across your events.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Insights</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">Dashboard</h1>
+          <p className="mt-3 max-w-2xl text-slate-300">
+            Aggregated feedback and attendance across your events.
+          </p>
+        </div>
+        <ExportReportButtons />
+      </div>
 
       <div className="mt-8">
         <DashboardFilterBar />

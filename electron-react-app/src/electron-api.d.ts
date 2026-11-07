@@ -7,6 +7,11 @@ declare global {
     electronAPI?: {
       platform: string
       savePdf: () => Promise<{ saved: boolean; filePath?: string }>
+      saveReport: (report: {
+        format: 'svg' | 'pdf'
+        svg: string
+        fileName: string
+      }) => Promise<{ saved: boolean; filePath?: string }>
     }
   }
 }
