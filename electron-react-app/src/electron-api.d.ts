@@ -8,8 +8,8 @@ declare global {
       platform: string
       savePdf: () => Promise<{ saved: boolean; filePath?: string }>
       saveReport: (report: {
-        format: 'svg' | 'pdf'
-        svg: string
+        format: 'svg' | 'pdf' | 'csv'
+        content: string // the SVG (also for a PDF) or the CSV text
         fileName: string
       }) => Promise<{ saved: boolean; filePath?: string }>
     }

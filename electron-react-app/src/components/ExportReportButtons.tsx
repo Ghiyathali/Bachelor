@@ -8,14 +8,15 @@ import {
 } from '../api/dashboard'
 import { REPORT_EXPORT_ROLES, hasRole } from '../auth/permissions'
 import { buildReportSvg } from '../reports/impactReport'
+import { buildReportCsv } from '../reports/reportCsv'
 import { useAuthStore } from '../stores/authStore'
 import { describeFilters, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 
-type ReportFormat = 'svg' | 'pdf'
+type ReportFormat = 'svg' | 'pdf' | 'csv'
 
-// Plain browser (no Electron): let the browser download the SVG.
-function downloadSvg(svg: string, fileName: string) {
-  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
+// Plain browser (no Electron): let the browser download the file.
+function download(content: string, type: string, fileName: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }))
   const link = document.createElement('a')
   link.href = url
   link.download = fileName
@@ -23,7 +24,7 @@ function downloadSvg(svg: string, fileName: string) {
   URL.revokeObjectURL(url)
 }
 
-// FR-11: one click exports the impact report for the filters that are applied right now.
+// FR-11 / #78: one click exports the impact report for the filters that are applied right now.
 export default function ExportReportButtons() {
   const role = useAuthStore((state) => state.user?.role)
   const filters = useDashboardFilterStore((state) => state.filters)
@@ -51,22 +52,24 @@ export default function ExportReportButtons() {
         getFilterOptions(),
       ])
       const now = new Date()
-      const svg = buildReportSvg({
+      const report = {
         generatedOn: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
         filterSummary: describeFilters(filters, options),
         overview,
         satisfaction,
         attendance,
         returning,
-      })
+      }
+      // The CSV has the same numbers as a table; the PDF is made from the SVG.
+      const content = format === 'csv' ? buildReportCsv(report) : buildReportSvg(report)
       const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       const fileName = `impact-report-${date}.${format}`
 
       if (saveReport) {
-        const result = await saveReport({ format, svg, fileName })
+        const result = await saveReport({ format, content, fileName })
         if (result.saved) setStatus({ text: `Saved to ${result.filePath}`, error: false })
       } else {
-        downloadSvg(svg, fileName)
+        download(content, format === 'csv' ? 'text/csv' : 'image/svg+xml', fileName)
       }
     } catch {
       setStatus({ text: 'Could not export the report. Please try again.', error: true })
@@ -87,6 +90,9 @@ export default function ExportReportButtons() {
         </button>
         <button type="button" className={buttonClass} disabled={disabled} onClick={() => void handleExport('pdf')}>
           Export PDF
+        </button>
+        <button type="button" className={buttonClass} disabled={disabled} onClick={() => void handleExport('csv')}>
+          Export CSV
         </button>
       </div>
       {busy && <p className="text-xs text-slate-400">Preparing the report…</p>}
