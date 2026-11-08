@@ -5,11 +5,11 @@ import { getErrorMessage } from '../api/client'
 import { AGE_BAND_LABELS, SEASON_LABELS, hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 
 const inputClass =
-  'mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 [color-scheme:dark]'
+  'mt-1 block w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900 [color-scheme:light]'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="min-w-0 text-xs font-medium text-slate-300">
+    <label className="min-w-0 text-xs font-medium text-stone-600">
       {label}
       {children}
     </label>
@@ -29,22 +29,22 @@ export default function DashboardFilterBar() {
   return (
     <section
       aria-label="Dashboard filters"
-      className="rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-lg shadow-black/10"
+      className="rounded-xl border border-stone-200 bg-white p-5 shadow-card"
     >
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-white">Filters</h2>
+        <h2 className="text-lg font-semibold text-stone-900">Filters</h2>
         <button
           type="button"
           onClick={reset}
           disabled={!active}
-          className="rounded-md px-3 py-2 text-sm font-medium text-sky-400 hover:bg-slate-800 disabled:text-slate-600 disabled:hover:bg-transparent"
+          className="rounded-md px-3 py-2 text-sm font-medium text-brand hover:bg-stone-100 disabled:text-stone-400 disabled:hover:bg-transparent"
         >
           Reset filters
         </button>
       </div>
 
       {options.error && (
-        <p className="mt-3 text-sm text-rose-300">Could not load the filter choices: {getErrorMessage(options.error)}</p>
+        <p className="mt-3 text-sm text-rose-700">Could not load the filter choices: {getErrorMessage(options.error)}</p>
       )}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,15 +109,15 @@ export default function DashboardFilterBar() {
       </div>
 
       {invalidRange && (
-        <p role="alert" className="mt-3 text-sm text-rose-300">“From” must be on or before “To”.</p>
+        <p role="alert" className="mt-3 text-sm text-rose-700">“From” must be on or before “To”.</p>
       )}
       {hasPeopleFilter(filters) && (
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-stone-500">
           City, age band and gender only filter sign-up numbers. Feedback is anonymous, so satisfaction
           and response counts are not filtered by them.
         </p>
       )}
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-stone-500">
         To protect privacy, numbers based on fewer than 5 people are hidden (“Not enough data”).
       </p>
     </section>

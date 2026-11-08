@@ -80,7 +80,7 @@ export default function ExportReportButtons() {
 
   const disabled = busy || !hasValidDateRange(filters)
   const buttonClass =
-    'rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent'
+    'rounded-md border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent'
 
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -95,9 +95,9 @@ export default function ExportReportButtons() {
           Export CSV
         </button>
       </div>
-      {busy && <p className="text-xs text-slate-400">Preparing the report…</p>}
+      {busy && <p className="text-xs text-stone-500">Preparing the report…</p>}
       {status && (
-        <p role="status" className={`max-w-sm break-all text-xs sm:text-right ${status.error ? 'text-rose-300' : 'text-slate-400'}`}>
+        <p role="status" className={`max-w-sm break-all text-xs sm:text-right ${status.error ? 'text-rose-700' : 'text-stone-500'}`}>
           {status.text}
         </p>
       )}

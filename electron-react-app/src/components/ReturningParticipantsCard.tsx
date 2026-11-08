@@ -5,10 +5,10 @@ import { getErrorMessage } from '../api/client'
 import { hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import ResponsiveBarChart from './charts/ResponsiveBarChart'
 
-const series = [{ key: 'returning', label: 'Returning participants', color: '#34d399' }]
+const series = [{ key: 'returning', label: 'Returning participants', color: 'var(--color-teal-600)' }]
 
 function Message({ children, error = false }: { children: ReactNode; error?: boolean }) {
-  return <div className={`flex h-80 items-center justify-center text-center text-sm ${error ? 'text-rose-300' : 'text-slate-400'}`}>{children}</div>
+  return <div className={`flex h-80 items-center justify-center text-center text-sm ${error ? 'text-rose-700' : 'text-stone-500'}`}>{children}</div>
 }
 
 // FR-09: share of accepted participants who said they had been to a Pangaea event before.
@@ -30,25 +30,25 @@ export default function ReturningParticipantsCard() {
   }))
   const hiddenTypes = types.filter(type => type.returningPercent === null).length
 
-  return <section className="min-w-0 rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-lg shadow-black/10">
-    <h2 className="text-lg font-semibold text-white">Returning participants</h2>
-    <p className="mt-1 text-sm text-slate-400">Share of participants who had been to a Pangaea event before.</p>
+  return <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 shadow-card">
+    <h2 className="text-lg font-semibold text-stone-900">Returning participants</h2>
+    <p className="mt-1 text-sm text-stone-500">Share of participants who had been to a Pangaea event before.</p>
     <div className="mt-5">
       {returning.isLoading ? <Message>Loading returning participants…</Message>
         : returning.error ? <Message error>{getErrorMessage(returning.error)}</Message>
         // NFR-02: fewer than 5 answers (including none) are never shown.
         : !data || data.returningPercent === null ? <Message>Not enough data: fewer than 5 participants answered this question for these filters.</Message>
         : <>
-          <p className="text-4xl font-bold text-emerald-300">{data.returningPercent.toFixed(1)}%</p>
-          <p className="mt-1 text-sm text-slate-400">returning participants · based on {data.answered} answers</p>
-          <h3 className="mb-2 mt-6 text-sm font-medium text-slate-300">By event type</h3>
+          <p className="text-4xl font-bold text-teal-700">{data.returningPercent.toFixed(1)}%</p>
+          <p className="mt-1 text-sm text-stone-500">returning participants · based on {data.answered} answers</p>
+          <h3 className="mb-2 mt-6 text-sm font-medium text-stone-600">By event type</h3>
           <ResponsiveBarChart data={chartData} series={series} xAxisLabel="Event type" yAxisLabel="Returning (%)" yMax={100}
             formatTooltip={(datum, _series, value) => `${datum.description} · ${value.toFixed(1)}% returning`} />
-          {hiddenTypes > 0 && <p className="mt-2 text-xs text-slate-500">
+          {hiddenTypes > 0 && <p className="mt-2 text-xs text-stone-500">
             {hiddenTypes} event type{hiddenTypes === 1 ? '' : 's'} hidden: fewer than 5 answers.
           </p>}
         </>}
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-stone-500">
         Self-reported on the sign-up form (“Have you attended before?”). Only accepted participants who answered are counted.
       </p>
     </div>

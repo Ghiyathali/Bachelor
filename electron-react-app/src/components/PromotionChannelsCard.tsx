@@ -5,10 +5,10 @@ import { getErrorMessage } from '../api/client'
 import { hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import ResponsiveBarChart from './charts/ResponsiveBarChart'
 
-const series = [{ key: 'people', label: 'Participants', color: '#38bdf8' }]
+const series = [{ key: 'people', label: 'Participants', color: 'var(--color-brand)' }]
 
 function Message({ children, error = false }: { children: ReactNode; error?: boolean }) {
-  return <div className={`flex h-80 items-center justify-center text-center text-sm ${error ? 'text-rose-300' : 'text-slate-400'}`}>{children}</div>
+  return <div className={`flex h-80 items-center justify-center text-center text-sm ${error ? 'text-rose-700' : 'text-stone-500'}`}>{children}</div>
 }
 
 // FR-10: how accepted participants heard about Pangaea.
@@ -30,9 +30,9 @@ export default function PromotionChannelsCard() {
     values: { people: row.count },
   }))
 
-  return <section className="min-w-0 rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-lg shadow-black/10">
-    <h2 className="text-lg font-semibold text-white">Promotion channels</h2>
-    <p className="mt-1 text-sm text-slate-400">How participants heard about Pangaea.</p>
+  return <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 shadow-card">
+    <h2 className="text-lg font-semibold text-stone-900">Promotion channels</h2>
+    <p className="mt-1 text-sm text-stone-500">How participants heard about Pangaea.</p>
     <div className="mt-5">
       {channels.isLoading ? <Message>Loading promotion channels…</Message>
         : channels.error ? <Message error>{getErrorMessage(channels.error)}</Message>
@@ -41,9 +41,9 @@ export default function PromotionChannelsCard() {
         : <>
           <ResponsiveBarChart data={chartData} series={series} xAxisLabel="Channel" yAxisLabel="Participants"
             formatTooltip={(datum, _series, value) => `${datum.description} · ${value} participant${value === 1 ? '' : 's'}`} />
-          {hiddenOther && <p className="mt-2 text-xs text-slate-500">Other: fewer than 5 people (not shown).</p>}
+          {hiddenOther && <p className="mt-2 text-xs text-stone-500">Other: fewer than 5 people (not shown).</p>}
         </>}
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-stone-500">
         From the sign-up form (“How did you hear about us?”). Only accepted participants who answered are counted. Channels chosen by fewer than 5 people are grouped into Other.
       </p>
     </div>

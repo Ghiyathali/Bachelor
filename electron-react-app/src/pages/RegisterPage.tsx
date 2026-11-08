@@ -30,7 +30,7 @@ const registerSchema = z
 
 type RegisterForm = z.infer<typeof registerSchema>
 
-const inputClass = 'mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-white'
+const inputClass = 'mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900'
 
 // Admin only (#52): an Admin creates an account for a PYN staff member.
 // The route is protected in router.tsx; the backend also rejects non-Admins (401/403).
@@ -71,15 +71,15 @@ export default function RegisterPage() {
   if (createdUsername) {
     return (
       <section className="mx-auto max-w-sm">
-        <h1 className="text-3xl font-bold text-white">Account created</h1>
-        <p className="mt-4 text-slate-300">
-          <span className="font-semibold text-white">{createdUsername}</span> can now log in with the
+        <h1 className="text-3xl font-bold text-stone-900">Account created</h1>
+        <p className="mt-4 text-stone-600">
+          <span className="font-semibold text-stone-900">{createdUsername}</span> can now log in with the
           password you set. Share it with them securely.
         </p>
         <button
           type="button"
           onClick={createAnother}
-          className="mt-6 inline-block rounded-md bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500"
+          className="mt-6 inline-block rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark"
         >
           Create another account
         </button>
@@ -89,50 +89,50 @@ export default function RegisterPage() {
 
   return (
     <section className="mx-auto max-w-sm">
-      <h1 className="text-3xl font-bold text-white">Create account</h1>
-      <p className="mt-2 text-sm text-slate-400">
+      <h1 className="text-3xl font-bold text-stone-900">Create account</h1>
+      <p className="mt-2 text-sm text-stone-500">
         Create a login for a PYN staff member. Choose the role this staff member needs.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-stone-600">Email</label>
           <input id="email" type="email" autoComplete="off" {...register('email')} className={inputClass} />
-          {errors.email && <p className="mt-1 text-sm text-rose-300">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-sm text-rose-700">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-slate-300">Username</label>
+          <label htmlFor="username" className="block text-sm font-medium text-stone-600">Username</label>
           <input id="username" autoComplete="off" {...register('username')} className={inputClass} />
-          {errors.username && <p className="mt-1 text-sm text-rose-300">{errors.username.message}</p>}
+          {errors.username && <p className="mt-1 text-sm text-rose-700">{errors.username.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-300">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium text-stone-600">Password</label>
           <input id="password" type="password" autoComplete="new-password" {...register('password')} className={inputClass} />
-          {errors.password && <p className="mt-1 text-sm text-rose-300">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-rose-700">{errors.password.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300">Confirm password</label>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-600">Confirm password</label>
           <input id="confirmPassword" type="password" autoComplete="new-password" {...register('confirmPassword')} className={inputClass} />
-          {errors.confirmPassword && <p className="mt-1 text-sm text-rose-300">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-sm text-rose-700">{errors.confirmPassword.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-slate-300">Role</label>
+          <label htmlFor="role" className="block text-sm font-medium text-stone-600">Role</label>
           <select id="role" {...register('role')} className={inputClass}>
             {ROLES.map(role => <option key={role}>{role}</option>)}
           </select>
-          {errors.role && <p className="mt-1 text-sm text-rose-300">{errors.role.message}</p>}
+          {errors.role && <p className="mt-1 text-sm text-rose-700">{errors.role.message}</p>}
         </div>
 
-        {serverError && <p className="rounded-md bg-rose-950 px-3 py-2 text-sm text-rose-200">{serverError}</p>}
+        {serverError && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">{serverError}</p>}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500 disabled:opacity-50"
+          className="w-full rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark disabled:opacity-50"
         >
           {isSubmitting ? 'Creating account…' : 'Create account'}
         </button>

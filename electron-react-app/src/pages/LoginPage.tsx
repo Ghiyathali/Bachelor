@@ -43,25 +43,27 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="mx-auto max-w-sm">
-      <h1 className="text-3xl font-bold text-white">Log in</h1>
+    <section className="mx-auto mt-4 max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-card sm:mt-12 sm:p-10">
+      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand">Pangaea Analytics</p>
+      <h1 className="text-3xl font-semibold text-stone-900">Welcome back</h1>
+      <p className="mt-2 text-sm leading-6 text-stone-500">Log in to your Pangaea workspace.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
         <div>
-          <label htmlFor="identifier" className="block text-sm font-medium text-slate-300">
+          <label htmlFor="identifier" className="block text-sm font-medium text-stone-600">
             Email or username
           </label>
           <input
             id="identifier"
             autoComplete="username"
             {...register('identifier')}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+            className="mt-2 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900"
           />
-          {errors.identifier && <p className="mt-1 text-sm text-rose-300">{errors.identifier.message}</p>}
+          {errors.identifier && <p className="mt-1 text-sm text-rose-700">{errors.identifier.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+          <label htmlFor="password" className="block text-sm font-medium text-stone-600">
             Password
           </label>
           <input
@@ -69,24 +71,24 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             {...register('password')}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-white"
+            className="mt-2 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900"
           />
-          {errors.password && <p className="mt-1 text-sm text-rose-300">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-rose-700">{errors.password.message}</p>}
         </div>
 
-        {serverError && <p className="rounded-md bg-rose-950 px-3 py-2 text-sm text-rose-200">{serverError}</p>}
+        {serverError && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">{serverError}</p>}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500 disabled:opacity-50"
+          className="w-full rounded-md bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark disabled:opacity-50"
         >
           {isSubmitting ? 'Logging in…' : 'Log in'}
         </button>
       </form>
 
       {/* #52: accounts are created by an Admin, there is no self-registration */}
-      <p className="mt-6 text-sm text-slate-400">
+      <p className="mt-6 border-t border-stone-100 pt-5 text-xs leading-5 text-stone-500">
         No account yet? Ask an administrator to create one for you.
       </p>
     </section>
