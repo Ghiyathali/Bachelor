@@ -31,10 +31,10 @@ export default function HomePage() {
 
   return (
     <section className="py-4 sm:py-8">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">Pangaea Analytics</p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-900">Welcome, {user?.username}</h1>
-      <p className="mt-2 text-sm text-stone-500">Signed in as {user?.role}</p>
-      <p className="mt-6 text-lg leading-8 text-stone-600">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-ink">Pangaea Analytics</p>
+      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">Welcome, {user?.username}</h1>
+      <p className="mt-2 text-sm text-muted">Signed in as {user?.role}</p>
+      <p className="mt-6 text-lg leading-8 text-body">
         Event feedback and impact data for Pangaea Youth Network.
       </p>
 
@@ -44,16 +44,16 @@ export default function HomePage() {
             <Link
               key={link.to}
               to={link.to}
-              className="group flex flex-col rounded-xl border border-stone-200 bg-white p-6 shadow-card transition hover:border-brand"
+              className="group flex flex-col rounded-xl border border-line bg-surface p-6 shadow-card transition hover:border-brand"
             >
-              <h2 className="text-lg font-semibold text-stone-900">{link.title}</h2>
-              <p className="mt-2 max-w-xs text-sm leading-6 text-stone-500">{link.description}</p>
-              <span aria-hidden="true" className="mt-8 text-lg text-brand">↗</span>
+              <h2 className="text-lg font-semibold text-ink">{link.title}</h2>
+              <p className="mt-2 max-w-xs text-sm leading-6 text-muted">{link.description}</p>
+              <span aria-hidden="true" className="mt-8 text-lg text-brand-ink">↗</span>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="mt-10 rounded-xl border border-stone-200 bg-white p-5 text-stone-600">
+        <p className="mt-10 rounded-xl border border-line bg-surface p-5 text-body">
           Your role does not give access to any features yet. Contact an administrator if you need access.
         </p>
       )}

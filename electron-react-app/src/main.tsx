@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { router } from './router'
 import './index.css'
+import { initializeTheme } from './stores/themeStore'
 import { useAuthStore } from './stores/authStore'
+
+initializeTheme()
 
 const queryClient = new QueryClient()
 useAuthStore.subscribe((state, previous) => {

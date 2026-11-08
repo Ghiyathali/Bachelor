@@ -26,9 +26,9 @@ function ChartCard({
   children: ReactNode
 }) {
   return (
-    <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 shadow-card">
-      <h2 className="text-lg font-semibold text-stone-900">{title}</h2>
-      <p className="mt-1 text-sm text-stone-500">{description}</p>
+    <section className="min-w-0 rounded-xl border border-line bg-surface p-5 shadow-card">
+      <h2 className="text-lg font-semibold text-ink">{title}</h2>
+      <p className="mt-1 text-sm text-muted">{description}</p>
       <div className="mt-5">{children}</div>
     </section>
   )
@@ -36,7 +36,7 @@ function ChartCard({
 
 function ChartMessage({ children, error = false }: { children: ReactNode; error?: boolean }) {
   return (
-    <div className={`flex h-80 items-center justify-center text-sm ${error ? 'text-rose-700' : 'text-stone-500'}`}>
+    <div className={`flex h-80 items-center justify-center text-sm ${error ? 'text-danger' : 'text-muted'}`}>
       {children}
     </div>
   )
@@ -63,9 +63,9 @@ export default function DashboardPage() {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">Insights</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-stone-900">Dashboard</h1>
-          <p className="mt-3 max-w-2xl text-stone-600">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-ink">Insights</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-ink">Dashboard</h1>
+          <p className="mt-3 max-w-2xl text-body">
             Aggregated feedback and attendance across your events.
           </p>
         </div>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
           {satisfaction.data && typeof totalResponses === 'number' && (
             <>
               <SatisfactionDistributionChart data={satisfaction.data} />
-              <p className="mt-2 text-xs text-stone-500">Ratings given by fewer than 5 people are hidden.</p>
+              <p className="mt-2 text-xs text-muted">Ratings given by fewer than 5 people are hidden.</p>
             </>
           )}
         </ChartCard>
@@ -116,12 +116,12 @@ export default function DashboardPage() {
           )}
           {attendance.data && attendance.data.events.length > 0 && (
             <>
-              <div className="mb-1 flex flex-wrap justify-end gap-4 text-xs text-stone-600">
-                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-brand" />Signed up</span>
-                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-teal-600" />Accepted</span>
+              <div className="mb-1 flex flex-wrap justify-end gap-4 text-xs text-body">
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-chart-primary" />Signed up</span>
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-chart-secondary" />Accepted</span>
               </div>
               <AttendanceByEventChart data={attendance.data} />
-              <p className="mt-2 text-xs text-stone-500">Bars for fewer than 5 people are hidden.</p>
+              <p className="mt-2 text-xs text-muted">Bars for fewer than 5 people are hidden.</p>
             </>
           )}
         </ChartCard>

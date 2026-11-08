@@ -48,7 +48,7 @@ export default function App() {
       }}>
         <div className="app-sidebar-top">
           <Link to="/" aria-label="Pangaea home" className="relative block h-10 w-28 shrink-0">
-            <img src={pangaeaLogo} alt="Pangaea Youth Network" className="absolute -left-3 -top-3 h-16 w-auto max-w-none" />
+            <img src={pangaeaLogo} alt="Pangaea Youth Network" className="app-logo absolute -left-3 -top-3 h-16 w-auto max-w-none" />
           </Link>
           {user && (
             <button ref={menuButton} type="button" className="app-menu-button"
@@ -73,9 +73,9 @@ export default function App() {
             <div className="app-sidebar-footer">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium" title={user.username}>{user.username}</p>
-                <p className="mt-1 text-xs text-stone-500">{user.role}</p>
+                <p className="mt-1 text-xs text-muted">{user.role}</p>
               </div>
-              <button type="button" onClick={() => void handleLogout()} className="mt-4 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-left text-xs font-medium text-stone-600 hover:bg-stone-100">Log out</button>
+              <button type="button" onClick={() => void handleLogout()} className="mt-4 w-full rounded-lg border border-line bg-surface px-3 py-2 text-left text-xs font-medium text-body hover:bg-hover">Log out</button>
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import type { SatisfactionDistribution } from '../../api/dashboard'
 import ResponsiveBarChart from './ResponsiveBarChart'
 
-const series = [{ key: 'responses', label: 'Responses', color: 'var(--color-brand)' }]
+const series = [{ key: 'responses', label: 'Responses', color: 'var(--color-chart-primary)' }]
 
 export default function SatisfactionDistributionChart({ data }: { data: SatisfactionDistribution }) {
   return (

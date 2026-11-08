@@ -16,7 +16,7 @@ export default function OverviewTiles() {
 
   if (overview.error) {
     return (
-      <p className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+      <p className="rounded-xl border border-danger-line bg-danger-soft p-5 text-sm text-danger">
         Could not load the key metrics: {getErrorMessage(overview.error)}
       </p>
     )
@@ -45,18 +45,18 @@ export default function OverviewTiles() {
       {tiles.map((tile) => (
         <section
           key={tile.label}
-          className="rounded-xl border border-stone-200 bg-white p-5 shadow-card"
+          className="rounded-xl border border-line bg-surface p-5 shadow-card"
         >
-          <h2 className="text-sm font-medium text-stone-500">{tile.label}</h2>
+          <h2 className="text-sm font-medium text-muted">{tile.label}</h2>
           {overview.isLoading ? (
-            <p className="mt-2 text-3xl font-bold tracking-tight text-stone-900">…</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-ink">…</p>
           ) : tile.value === null || tile.value === undefined ? (
             // NFR-02: hidden because it covers fewer than 5 people.
-            <p className="mt-3 text-base font-semibold text-stone-500">Not enough data</p>
+            <p className="mt-3 text-base font-semibold text-muted">Not enough data</p>
           ) : (
-            <p className="mt-2 text-3xl font-bold tracking-tight text-stone-900">{tile.value}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-ink">{tile.value}</p>
           )}
-          {tile.note && <p className="mt-2 text-xs text-stone-500">{tile.note}</p>}
+          {tile.note && <p className="mt-2 text-xs text-muted">{tile.note}</p>}
         </section>
       ))}
     </div>

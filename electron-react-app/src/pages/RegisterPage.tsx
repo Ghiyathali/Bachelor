@@ -30,7 +30,7 @@ const registerSchema = z
 
 type RegisterForm = z.infer<typeof registerSchema>
 
-const inputClass = 'mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900'
+const inputClass = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-ink'
 
 // Admin only (#52): an Admin creates an account for a PYN staff member.
 // The route is protected in router.tsx; the backend also rejects non-Admins (401/403).
@@ -71,9 +71,9 @@ export default function RegisterPage() {
   if (createdUsername) {
     return (
       <section className="mx-auto max-w-sm">
-        <h1 className="text-3xl font-bold text-stone-900">Account created</h1>
-        <p className="mt-4 text-stone-600">
-          <span className="font-semibold text-stone-900">{createdUsername}</span> can now log in with the
+        <h1 className="text-3xl font-bold text-ink">Account created</h1>
+        <p className="mt-4 text-body">
+          <span className="font-semibold text-ink">{createdUsername}</span> can now log in with the
           password you set. Share it with them securely.
         </p>
         <button
@@ -89,45 +89,45 @@ export default function RegisterPage() {
 
   return (
     <section className="mx-auto max-w-sm">
-      <h1 className="text-3xl font-bold text-stone-900">Create account</h1>
-      <p className="mt-2 text-sm text-stone-500">
+      <h1 className="text-3xl font-bold text-ink">Create account</h1>
+      <p className="mt-2 text-sm text-muted">
         Create a login for a PYN staff member. Choose the role this staff member needs.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-stone-600">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-body">Email</label>
           <input id="email" type="email" autoComplete="off" {...register('email')} className={inputClass} />
-          {errors.email && <p className="mt-1 text-sm text-rose-700">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-sm text-danger">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-stone-600">Username</label>
+          <label htmlFor="username" className="block text-sm font-medium text-body">Username</label>
           <input id="username" autoComplete="off" {...register('username')} className={inputClass} />
-          {errors.username && <p className="mt-1 text-sm text-rose-700">{errors.username.message}</p>}
+          {errors.username && <p className="mt-1 text-sm text-danger">{errors.username.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-stone-600">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium text-body">Password</label>
           <input id="password" type="password" autoComplete="new-password" {...register('password')} className={inputClass} />
-          {errors.password && <p className="mt-1 text-sm text-rose-700">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-danger">{errors.password.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-600">Confirm password</label>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-body">Confirm password</label>
           <input id="confirmPassword" type="password" autoComplete="new-password" {...register('confirmPassword')} className={inputClass} />
-          {errors.confirmPassword && <p className="mt-1 text-sm text-rose-700">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-sm text-danger">{errors.confirmPassword.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-stone-600">Role</label>
+          <label htmlFor="role" className="block text-sm font-medium text-body">Role</label>
           <select id="role" {...register('role')} className={inputClass}>
             {ROLES.map(role => <option key={role}>{role}</option>)}
           </select>
-          {errors.role && <p className="mt-1 text-sm text-rose-700">{errors.role.message}</p>}
+          {errors.role && <p className="mt-1 text-sm text-danger">{errors.role.message}</p>}
         </div>
 
-        {serverError && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">{serverError}</p>}
+        {serverError && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{serverError}</p>}
 
         <button
           type="submit"

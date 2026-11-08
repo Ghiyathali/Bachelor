@@ -43,27 +43,27 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="mx-auto mt-4 max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-card sm:mt-12 sm:p-10">
-      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand">Pangaea Analytics</p>
-      <h1 className="text-3xl font-semibold text-stone-900">Welcome back</h1>
-      <p className="mt-2 text-sm leading-6 text-stone-500">Log in to your Pangaea workspace.</p>
+    <section className="mx-auto mt-4 max-w-md rounded-2xl border border-line bg-surface p-6 shadow-card sm:mt-12 sm:p-10">
+      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-ink">Pangaea Analytics</p>
+      <h1 className="text-3xl font-semibold text-ink">Welcome back</h1>
+      <p className="mt-2 text-sm leading-6 text-muted">Log in to your Pangaea workspace.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
         <div>
-          <label htmlFor="identifier" className="block text-sm font-medium text-stone-600">
+          <label htmlFor="identifier" className="block text-sm font-medium text-body">
             Email or username
           </label>
           <input
             id="identifier"
             autoComplete="username"
             {...register('identifier')}
-            className="mt-2 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900"
+            className="mt-2 w-full rounded-md border border-line bg-surface px-3 py-2 text-ink"
           />
-          {errors.identifier && <p className="mt-1 text-sm text-rose-700">{errors.identifier.message}</p>}
+          {errors.identifier && <p className="mt-1 text-sm text-danger">{errors.identifier.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-stone-600">
+          <label htmlFor="password" className="block text-sm font-medium text-body">
             Password
           </label>
           <input
@@ -71,12 +71,12 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             {...register('password')}
-            className="mt-2 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-stone-900"
+            className="mt-2 w-full rounded-md border border-line bg-surface px-3 py-2 text-ink"
           />
-          {errors.password && <p className="mt-1 text-sm text-rose-700">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-sm text-danger">{errors.password.message}</p>}
         </div>
 
-        {serverError && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">{serverError}</p>}
+        {serverError && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{serverError}</p>}
 
         <button
           type="submit"
@@ -88,7 +88,7 @@ export default function LoginPage() {
       </form>
 
       {/* #52: accounts are created by an Admin, there is no self-registration */}
-      <p className="mt-6 border-t border-stone-100 pt-5 text-xs leading-5 text-stone-500">
+      <p className="mt-6 border-t border-line pt-5 text-xs leading-5 text-muted">
         No account yet? Ask an administrator to create one for you.
       </p>
     </section>

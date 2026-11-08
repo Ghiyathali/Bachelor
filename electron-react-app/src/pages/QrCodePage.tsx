@@ -38,8 +38,8 @@ export default function QrCodePage() {
     <section>
       {/* Controls: hidden on the printed page / PDF */}
       <div className="mb-8 print:hidden">
-        <h1 className="text-3xl font-bold tracking-tight text-stone-900">Feedback QR code</h1>
-        <p className="mt-2 text-stone-600">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">Feedback QR code</h1>
+        <p className="mt-2 text-body">
           One code for every event. Print it and put it up at the venue.
         </p>
         <div className="mt-6 flex gap-3">
@@ -55,12 +55,12 @@ export default function QrCodePage() {
             type="button"
             onClick={() => void handleExportPdf()}
             disabled={!qrImage}
-            className="rounded-md border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+            className="rounded-md border border-line px-4 py-2 text-sm font-semibold text-body hover:bg-hover disabled:opacity-50"
           >
             Export PDF
           </button>
         </div>
-        {status && <p className="mt-3 text-sm text-stone-500">{status}</p>}
+        {status && <p className="mt-3 text-sm text-muted">{status}</p>}
       </div>
 
       {/* The printable page: white with black text, so it prints cleanly */}
