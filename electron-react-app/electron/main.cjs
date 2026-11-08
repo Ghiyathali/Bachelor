@@ -63,9 +63,10 @@ async function svgToPdf(svg) {
   }
 }
 
-// FR-11: ask where to save the impact report, then write it as an SVG or a PDF.
-ipcMain.handle('save-report', async (event, { format, svg, fileName }) => {
-  if ((format !== 'svg' && format !== 'pdf') || typeof svg !== 'string') {
+// FR-11 / #78: ask where to save the impact report, then write it as an SVG, PDF or CSV.
+// For a PDF, content is the report's SVG, which is turned into a PDF here.
+ipcMain.handle('save-report', async (event, { format, content, fileName }) => {
+  if (!['svg', 'pdf', 'csv'].includes(format) || typeof content !== 'string') {
     throw new Error('Invalid report')
   }
   const window = BrowserWindow.fromWebContents(event.sender)
@@ -78,7 +79,7 @@ ipcMain.handle('save-report', async (event, { format, svg, fileName }) => {
     : await dialog.showSaveDialog(options)
   if (canceled || !filePath) return { saved: false }
 
-  await fs.writeFile(filePath, format === 'pdf' ? await svgToPdf(svg) : svg)
+  await fs.writeFile(filePath, format === 'pdf' ? await svgToPdf(content) : content)
   return { saved: true, filePath }
 })
 
