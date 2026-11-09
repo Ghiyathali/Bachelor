@@ -117,9 +117,6 @@ export default function DashboardFilterBar() {
           and response counts are not filtered by them.
         </p>
       )}
-      <p className="mt-2 text-xs text-muted">
-        To protect privacy, numbers based on fewer than 5 people are hidden (“Not enough data”).
-      </p>
     </section>
   )
 }

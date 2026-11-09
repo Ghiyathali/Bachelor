@@ -1,6 +1,6 @@
 // @ts-check
 
-const { app, BrowserWindow, dialog, ipcMain } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
@@ -63,6 +63,11 @@ async function svgToPdf(svg) {
   }
 }
 
+// #80: "Show in folder" in the toast after saving. Only files this app saved itself can be
+// shown, so the page cannot ask Explorer to open any path it likes.
+/** @type {Set<string>} */
+const savedReports = new Set()
+
 // FR-11 / #78: ask where to save the impact report, then write it as an SVG, PDF or CSV.
 // For a PDF, content is the report's SVG, which is turned into a PDF here.
 ipcMain.handle('save-report', async (event, { format, content, fileName }) => {
@@ -80,7 +85,13 @@ ipcMain.handle('save-report', async (event, { format, content, fileName }) => {
   if (canceled || !filePath) return { saved: false }
 
   await fs.writeFile(filePath, format === 'pdf' ? await svgToPdf(content) : content)
+  savedReports.add(filePath)
   return { saved: true, filePath }
+})
+
+// #80: "Show in folder" in the toast after saving (only for files saved above).
+ipcMain.handle('show-in-folder', (_event, filePath) => {
+  if (typeof filePath === 'string' && savedReports.has(filePath)) shell.showItemInFolder(filePath)
 })
 
 app.whenReady().then(() => {

@@ -5,7 +5,9 @@ import {
   getSatisfactionDistribution,
 } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
+import ActiveFilterChips from '../components/ActiveFilterChips'
 import DashboardFilterBar from '../components/DashboardFilterBar'
+import EmptyState from '../components/EmptyState'
 import ExportReportButtons from '../components/ExportReportButtons'
 import OverviewTiles from '../components/OverviewTiles'
 import { hasPeopleFilter, hasValidDateRange, useDashboardFilterStore } from '../stores/dashboardFilterStore'
@@ -76,7 +78,12 @@ export default function DashboardPage() {
         <DashboardFilterBar />
       </div>
 
-      <div className="mt-6">
+      {/* #80: the applied filters as chips, right above the numbers they change */}
+      <div className="mt-6 empty:hidden">
+        <ActiveFilterChips />
+      </div>
+
+      <div className="mt-4">
         <OverviewTiles />
       </div>
 
@@ -95,12 +102,15 @@ export default function DashboardPage() {
           {satisfaction.error && <ChartMessage error>{getErrorMessage(satisfaction.error)}</ChartMessage>}
           {/* NFR-02: fewer than 5 responses (including none) are never shown */}
           {satisfaction.data && totalResponses === null && (
-            <ChartMessage>Not enough data: fewer than 5 feedback responses match these filters.</ChartMessage>
+            <EmptyState
+              icon="shield"
+              title="Not enough data to show"
+              text="Fewer than 5 feedback responses match these filters, so they're hidden to protect privacy."
+            />
           )}
           {satisfaction.data && typeof totalResponses === 'number' && (
             <>
               <SatisfactionDistributionChart data={satisfaction.data} />
-              <p className="mt-2 text-xs text-muted">Ratings given by fewer than 5 people are hidden.</p>
             </>
           )}
         </ChartCard>
@@ -112,7 +122,7 @@ export default function DashboardPage() {
           {attendance.isLoading && <ChartMessage>Loading attendance data…</ChartMessage>}
           {attendance.error && <ChartMessage error>{getErrorMessage(attendance.error)}</ChartMessage>}
           {attendance.data && attendance.data.events.length === 0 && (
-            <ChartMessage>No events match these filters.</ChartMessage>
+            <EmptyState icon="calendar" title="No events match" text="Try a wider date range or fewer filters." />
           )}
           {attendance.data && attendance.data.events.length > 0 && (
             <>
@@ -121,7 +131,6 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-chart-secondary" />Accepted</span>
               </div>
               <AttendanceByEventChart data={attendance.data} />
-              <p className="mt-2 text-xs text-muted">Bars for fewer than 5 people are hidden.</p>
             </>
           )}
         </ChartCard>
