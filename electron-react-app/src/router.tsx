@@ -20,6 +20,23 @@ import { isLoggedIn, useAuthStore } from './stores/authStore'
 import { useDashboardFilterStore } from './stores/dashboardFilterStore'
 import { useDashboardPreferencesStore } from './stores/dashboardPreferencesStore'
 import { getDefaultDateRange } from './stores/defaultDateRange'
+import { clearRememberedFilters, readRememberedFilters, saveRememberedFilters } from './stores/rememberedDashboardFilters'
+
+// Only save filters belonging to the account that last opened the dashboard.
+let dashboardOwner: string | undefined
+useDashboardFilterStore.subscribe(state => {
+  const username = useAuthStore.getState().user?.username
+  if (username && username === dashboardOwner && useDashboardPreferencesStore.getState().rememberFilters) {
+    saveRememberedFilters(username, state.filters)
+  }
+})
+useDashboardPreferencesStore.subscribe((state, previous) => {
+  if (state.rememberFilters === previous.rememberFilters) return
+  const username = useAuthStore.getState().user?.username
+  if (!username) return
+  if (!state.rememberFilters) clearRememberedFilters(username)
+  else if (username === dashboardOwner) saveRememberedFilters(username, useDashboardFilterStore.getState().filters)
+})
 
 // Guard for protected pages: no valid token -> go to /login.
 async function requireAuth() {
@@ -81,9 +98,18 @@ const dashboardRoute = createRoute({
   path: 'dashboard',
   beforeLoad: requireRole(DASHBOARD_ROLES),
   onEnter: () => {
-    const dates = getDefaultDateRange(useDashboardPreferencesStore.getState().defaultDateRange)
+    const username = useAuthStore.getState().user!.username
+    const preferences = useDashboardPreferencesStore.getState()
+    const remembered = preferences.rememberFilters ? readRememberedFilters(username) : undefined
+    const sameAccount = dashboardOwner === username
+    dashboardOwner = username
     useDashboardFilterStore.setState(state => ({
-      filters: { ...state.filters, from: dates.from, to: dates.to },
+      filters: remembered ?? {
+        ...(sameAccount ? state.filters : {}),
+        from: undefined,
+        to: undefined,
+        ...getDefaultDateRange(preferences.defaultDateRange),
+      },
     }))
   },
   component: DashboardPage,

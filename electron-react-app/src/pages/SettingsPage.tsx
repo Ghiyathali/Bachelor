@@ -7,6 +7,8 @@ export default function SettingsPage() {
   const dark = theme === 'dark'
   const defaultDateRange = useDashboardPreferencesStore(state => state.defaultDateRange)
   const setDefaultDateRange = useDashboardPreferencesStore(state => state.setDefaultDateRange)
+  const rememberFilters = useDashboardPreferencesStore(state => state.rememberFilters)
+  const setRememberFilters = useDashboardPreferencesStore(state => state.setRememberFilters)
 
   return (
     <section className="max-w-2xl">
@@ -39,7 +41,7 @@ export default function SettingsPage() {
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <label htmlFor="default-date-range" className="text-sm font-medium text-ink">Default date range</label>
-            <p id="default-date-range-description" className="mt-1 text-sm leading-6 text-muted">Apply this date range each time you open the dashboard.</p>
+            <p id="default-date-range-description" className="mt-1 text-sm leading-6 text-muted">Apply when opening the dashboard unless saved filters are restored.</p>
           </div>
           <select
             id="default-date-range"
@@ -54,7 +56,24 @@ export default function SettingsPage() {
             <option value="all">All time</option>
           </select>
         </div>
-        <p className="mt-6 border-t border-line pt-4 text-xs text-muted">Saved on this device. You can still change or reset dates in the dashboard filters.</p>
+        <div className="mt-6 flex items-center justify-between gap-6 border-t border-line pt-6">
+          <div>
+            <h3 id="remember-filters-label" className="text-sm font-medium text-ink">Remember dashboard filters</h3>
+            <p id="remember-filters-description" className="mt-1 text-sm leading-6 text-muted">Restore your last selected dashboard filters between visits, including dates. Saved filters take priority over the default date range.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={rememberFilters}
+            aria-labelledby="remember-filters-label"
+            aria-describedby="remember-filters-description"
+            onClick={() => setRememberFilters(!rememberFilters)}
+            className="theme-switch shrink-0"
+          >
+            <span className="theme-switch-thumb" />
+          </button>
+        </div>
+        <p className="mt-6 border-t border-line pt-4 text-xs text-muted">Preferences are saved on this device. Remembered filters are saved separately for each account. Turning this off clears your saved filters.</p>
       </section>
     </section>
   )
