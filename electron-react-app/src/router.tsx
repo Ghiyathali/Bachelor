@@ -15,6 +15,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
+import SettingsPage from './pages/SettingsPage'
 import { isLoggedIn, useAuthStore } from './stores/authStore'
 
 // Guard for protected pages: no valid token -> go to /login.
@@ -43,21 +44,11 @@ function redirectIfLoggedIn() {
   }
 }
 
-function SettingsPage() {
-  return (
-    <section className="max-w-2xl">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">Pangaea Analytics</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Settings</h1>
-      <p className="mt-6 text-lg leading-8 text-slate-300">Account settings will be available here.</p>
-    </section>
-  )
-}
-
 function NotFoundPage() {
   return (
     <section className="max-w-2xl">
-      <h1 className="text-4xl font-bold text-white">Page not found</h1>
-      <Link to="/" className="mt-6 inline-block font-medium text-sky-400 hover:text-sky-300">Return home</Link>
+      <h1 className="text-4xl font-bold text-ink">Page not found</h1>
+      <Link to="/" className="mt-6 inline-block font-medium text-brand-ink hover:underline">Return home</Link>
     </section>
   )
 }

@@ -12,6 +12,7 @@ declare global {
         content: string // the SVG (also for a PDF) or the CSV text
         fileName: string
       }) => Promise<{ saved: boolean; filePath?: string }>
+      showInFolder: (filePath: string) => Promise<void>
     }
   }
 }

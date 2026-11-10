@@ -1,13 +1,28 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { refreshSession } from './auth/session'
 import { Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
+import pangaeaLogo from '../pangaea-logo.png'
 
 export default function App() {
   const navigate = useNavigate()
   const router = useRouter()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => router.subscribe('onResolved', () => setMenuOpen(false)), [router])
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const closeMenu = () => setMenuOpen(false)
+    desktop.addEventListener('change', closeMenu)
+    return () => desktop.removeEventListener('change', closeMenu)
+  }, [])
+
   const token = useAuthStore(state => state.token)
+  const user = useAuthStore(state => state.user)
+  const logout = useAuthStore(state => state.logout)
+
   useEffect(() => {
     if (!token) return
     const refresh = () => { void refreshSession().catch(() => {}) }
@@ -15,82 +30,58 @@ export default function App() {
     window.addEventListener('focus', refresh)
     return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
   }, [token])
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
 
   useEffect(() => { void router.invalidate() }, [user?.role, router])
 
   async function handleLogout() {
-    logout() // 1. throw the token away (FR-16)
-    await navigate({ to: '/login' }) // 2. back to the login page
+    logout()
+    await navigate({ to: '/login' })
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/80 px-6 py-4 print:hidden">
-        <nav className="mx-auto flex max-w-5xl items-center gap-6" aria-label="Main navigation">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-white">
-            Pangaea
+    <div className={`app-shell ${user ? 'app-shell-authenticated' : ''}`}>
+      <aside className="app-sidebar print:hidden" data-open={menuOpen} onKeyDown={event => {
+        if (event.key === 'Escape' && menuOpen) {
+          setMenuOpen(false)
+          menuButton.current?.focus()
+        }
+      }}>
+        <div className="app-sidebar-top">
+          <Link to="/" aria-label="Pangaea home" className="relative block h-10 w-28 shrink-0">
+            <img src={pangaeaLogo} alt="Pangaea Youth Network" className="app-logo absolute -left-3 -top-3 h-16 w-auto max-w-none" />
           </Link>
-
-          {user ? (
-            <>
-              {hasRole(user.role, DASHBOARD_ROLES) && (
-                <Link
-                  to="/dashboard"
-                  className="ml-auto text-sm font-medium text-slate-300 transition hover:text-white"
-                  activeProps={{ className: 'text-white' }}
-                >
-                  Dashboard
-                </Link>
-              )}
-              {/* FR-12: hide the QR link from roles that may not use it */}
-              {hasRole(user.role, QR_CODE_ROLES) && (
-                <Link
-                  to="/qr-code"
-                  className="text-sm font-medium text-slate-300 transition hover:text-white"
-                  activeProps={{ className: 'text-white' }}
-                >
-                  QR code
-                </Link>
-              )}
-              {/* #52: only Admins create accounts */}
-              {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && (
-                <Link
-                  to="/accounts"
-                  className="text-sm font-medium text-slate-300 transition hover:text-white"
-                  activeProps={{ className: 'text-white' }}
-                >
-                  Manage accounts
-                </Link>
-              )}
-              <Link
-                to="/settings"
-                className={`${hasRole(user.role, DASHBOARD_ROLES) ? '' : 'ml-auto'} text-sm font-medium text-slate-300 transition hover:text-white`}
-                activeProps={{ className: 'text-white' }}
-              >
-                Settings
-              </Link>
-              <span className="text-sm text-slate-400">
-                {user.username} ({user.role})
-              </span>
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                className="rounded-md border border-slate-700 px-3 py-1 text-sm text-slate-200 hover:bg-slate-800"
-              >
-                Log out
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="ml-auto text-sm font-medium text-slate-300 hover:text-white">
-              Log in
-            </Link>
+          {user && (
+            <button ref={menuButton} type="button" className="app-menu-button"
+              aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={menuOpen} aria-controls="app-navigation"
+              onClick={() => setMenuOpen(open => !open)}>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                {menuOpen ? <path d="m6 6 12 12M6 18 18 6" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
+              </svg>
+            </button>
           )}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
-        <Outlet />
+        </div>
+        {user && (
+          <div id="app-navigation" className="app-navigation-panel">
+            <nav className="app-navigation" aria-label="Main navigation">
+              <Link to="/" activeOptions={{ exact: true }} className="app-nav-link">Overview</Link>
+              {hasRole(user.role, DASHBOARD_ROLES) && <Link to="/dashboard" className="app-nav-link">Dashboard</Link>}
+              {hasRole(user.role, QR_CODE_ROLES) && <Link to="/qr-code" className="app-nav-link">QR code</Link>}
+              {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && <Link to="/accounts" className="app-nav-link">Manage accounts</Link>}
+              <Link to="/settings" className="app-nav-link">Settings</Link>
+            </nav>
+            <div className="app-sidebar-footer">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium" title={user.username}>{user.username}</p>
+                <p className="mt-1 text-xs text-muted">{user.role}</p>
+              </div>
+              <button type="button" onClick={() => void handleLogout()} className="mt-4 w-full rounded-lg border border-line bg-surface px-3 py-2 text-left text-xs font-medium text-body hover:bg-hover">Log out</button>
+            </div>
+          </div>
+        )}
+      </aside>
+      <main className="app-main">
+        <div className="mx-auto w-full max-w-7xl"><Outlet /></div>
       </main>
     </div>
   )

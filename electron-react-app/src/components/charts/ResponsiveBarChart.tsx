@@ -74,10 +74,10 @@ export default function ResponsiveBarChart({
     const axis = select(xAxisRef.current).call(
       axisBottom(x).tickSizeOuter(0).tickFormat((key) => labels.get(key) ?? key),
     )
-    axis.selectAll('path, line').attr('stroke', '#475569')
+    axis.selectAll('path, line').attr('stroke', 'var(--color-line-strong)')
     axis
       .selectAll<SVGTextElement, string>('text')
-      .attr('fill', '#cbd5e1')
+      .attr('fill', 'var(--color-body)')
       .attr('font-size', 11)
       .attr('text-anchor', x.bandwidth() < 70 ? 'end' : 'middle')
       .attr('transform', x.bandwidth() < 70 ? 'rotate(-28)' : null)
@@ -89,8 +89,8 @@ export default function ResponsiveBarChart({
     if (!yAxisRef.current) return
 
     const axis = select(yAxisRef.current).call(axisLeft(y).ticks(5).tickFormat(format('d')))
-    axis.selectAll('path, line').attr('stroke', '#475569')
-    axis.selectAll('text').attr('fill', '#cbd5e1').attr('font-size', 11)
+    axis.selectAll('path, line').attr('stroke', 'var(--color-line-strong)')
+    axis.selectAll('text').attr('fill', 'var(--color-body)').attr('font-size', 11)
   }, [y, width])
 
   function showTooltip(
@@ -161,7 +161,7 @@ export default function ResponsiveBarChart({
               x={innerWidth / 2}
               y={innerHeight + 66}
               textAnchor="middle"
-              fill="#94a3b8"
+              fill="var(--color-muted)"
               fontSize="12"
             >
               {xAxisLabel}
@@ -169,7 +169,7 @@ export default function ResponsiveBarChart({
             <text
               transform={`translate(${-46},${innerHeight / 2}) rotate(-90)`}
               textAnchor="middle"
-              fill="#94a3b8"
+              fill="var(--color-muted)"
               fontSize="12"
             >
               {yAxisLabel}
@@ -180,7 +180,7 @@ export default function ResponsiveBarChart({
 
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-10 max-w-52 -translate-x-1/2 -translate-y-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 shadow-xl"
+          className="pointer-events-none absolute z-10 max-w-52 -translate-x-1/2 -translate-y-full rounded-md border border-line-strong bg-canvas px-3 py-2 text-xs font-medium text-ink shadow-xl"
           style={{ left: tooltip.left, top: tooltip.top }}
           role="tooltip"
         >
