@@ -17,6 +17,9 @@ import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
 import SettingsPage from './pages/SettingsPage'
 import { isLoggedIn, useAuthStore } from './stores/authStore'
+import { useDashboardFilterStore } from './stores/dashboardFilterStore'
+import { useDashboardPreferencesStore } from './stores/dashboardPreferencesStore'
+import { getDefaultDateRange } from './stores/defaultDateRange'
 
 // Guard for protected pages: no valid token -> go to /login.
 async function requireAuth() {
@@ -77,6 +80,12 @@ const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'dashboard',
   beforeLoad: requireRole(DASHBOARD_ROLES),
+  onEnter: () => {
+    const dates = getDefaultDateRange(useDashboardPreferencesStore.getState().defaultDateRange)
+    useDashboardFilterStore.setState(state => ({
+      filters: { ...state.filters, from: dates.from, to: dates.to },
+    }))
+  },
   component: DashboardPage,
 })
 
