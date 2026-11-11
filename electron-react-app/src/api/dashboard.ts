@@ -163,3 +163,21 @@ export async function getPromotionChannels(filters: DashboardFilters = {}): Prom
   const { data } = await api.get<PromotionChannels>('/api/dashboard/channels', { params: filters })
   return data
 }
+
+// FR-14: estimated attendance for a planned event. Mirrors AttendanceEstimateResponse in AttendanceEstimateController.cs.
+// average/estimate/low/high are null when there are fewer than 3 past events of the type.
+export interface AttendanceEstimate {
+  eventTypeId: number
+  eventTypeName: string
+  date: string
+  basedOnEvents: number
+  average: number | null
+  estimate: number | null
+  low: number | null
+  high: number | null
+}
+
+export async function getAttendanceEstimate(eventTypeId: number, date: string): Promise<AttendanceEstimate> {
+  const { data } = await api.get<AttendanceEstimate>('/api/dashboard/estimate', { params: { eventTypeId, date } })
+  return data
+}

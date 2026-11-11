@@ -15,6 +15,7 @@ import TrendsCard from '../components/TrendsCard'
 import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
 import ReturningParticipantsCard from '../components/ReturningParticipantsCard'
 import PromotionChannelsCard from '../components/PromotionChannelsCard'
+import AttendanceEstimateCard from '../components/AttendanceEstimateCard'
 import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
 import SatisfactionDistributionChart from '../components/charts/SatisfactionDistributionChart'
 
@@ -140,6 +141,11 @@ export default function DashboardPage() {
       <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-2">
         <ReturningParticipantsCard />
         <PromotionChannelsCard />
+      </div>
+
+      {/* FR-14: planning help for a future event */}
+      <div className="mt-8">
+        <AttendanceEstimateCard />
       </div>
     </section>
   )
