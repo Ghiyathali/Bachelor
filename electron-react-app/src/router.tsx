@@ -21,9 +21,14 @@ import { useDashboardFilterStore } from './stores/dashboardFilterStore'
 import { useDashboardPreferencesStore } from './stores/dashboardPreferencesStore'
 import { getDefaultDateRange } from './stores/defaultDateRange'
 import { clearRememberedFilters, readRememberedFilters, saveRememberedFilters } from './stores/rememberedDashboardFilters'
+import { filtersOnDashboardEnter } from './stores/dashboardEntryFilters'
 
 // Only save filters belonging to the account that last opened the dashboard.
 let dashboardOwner: string | undefined
+// After logging out, the next visit counts as a first visit again (default date range).
+useAuthStore.subscribe(state => {
+  if (!state.token) dashboardOwner = undefined
+})
 useDashboardFilterStore.subscribe(state => {
   const username = useAuthStore.getState().user?.username
   if (username && username === dashboardOwner && useDashboardPreferencesStore.getState().rememberFilters) {
@@ -101,15 +106,15 @@ const dashboardRoute = createRoute({
     const username = useAuthStore.getState().user!.username
     const preferences = useDashboardPreferencesStore.getState()
     const remembered = preferences.rememberFilters ? readRememberedFilters(username) : undefined
-    const sameAccount = dashboardOwner === username
+    const firstVisit = dashboardOwner !== username
     dashboardOwner = username
     useDashboardFilterStore.setState(state => ({
-      filters: remembered ?? {
-        ...(sameAccount ? state.filters : {}),
-        from: undefined,
-        to: undefined,
-        ...getDefaultDateRange(preferences.defaultDateRange),
-      },
+      filters: filtersOnDashboardEnter({
+        remembered,
+        firstVisit,
+        current: state.filters,
+        defaultDates: getDefaultDateRange(preferences.defaultDateRange),
+      }),
     }))
   },
   component: DashboardPage,
