@@ -34,7 +34,7 @@ export default function SettingsPage() {
             <span className="theme-switch-thumb" />
           </button>
         </div>
-        <p className="mt-6 border-t border-line pt-4 text-xs text-muted">Your appearance preference is saved on this device.</p>
+        <p className="mt-6 border-t border-line pt-4 text-xs text-helper">Your appearance preference is saved on this device.</p>
       </section>
       <section aria-labelledby="dashboard-title" className="mt-6 rounded-xl border border-line bg-surface p-6 shadow-card">
         <h2 id="dashboard-title" className="text-lg font-semibold text-ink">Dashboard</h2>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
             <span className="theme-switch-thumb" />
           </button>
         </div>
-        <p className="mt-6 border-t border-line pt-4 text-xs text-muted">Preferences are saved on this device. Remembered filters are saved separately for each account. Turning this off clears your saved filters.</p>
+        <p className="mt-6 border-t border-line pt-4 text-xs text-helper">Preferences are saved on this device. Remembered filters are saved separately for each account. Turning this off clears your saved filters.</p>
       </section>
     </section>
   )

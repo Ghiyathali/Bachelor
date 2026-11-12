@@ -115,7 +115,7 @@ export default function DashboardFilterBar() {
         <p role="alert" className="mt-3 text-sm text-danger">“From” must be on or before “To”.</p>
       )}
       {hasPeopleFilter(filters) && (
-        <p className="mt-3 text-xs text-muted">
+        <p className="mt-3 text-xs text-helper">
           City, age band and gender only filter sign-up numbers. Feedback is anonymous, so satisfaction
           and response counts are not filtered by them.
         </p>

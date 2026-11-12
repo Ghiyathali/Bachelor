@@ -167,7 +167,7 @@ export default function ExportReportButtons() {
               className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-ink hover:bg-hover focus-visible:bg-hover"
             >
               <span className="font-medium">{item.label}</span>
-              <span className="text-xs text-muted">{item.hint}</span>
+              <span className="text-xs text-helper">{item.hint}</span>
             </button>
           ))}
         </div>
@@ -180,7 +180,7 @@ export default function ExportReportButtons() {
             toast.error ? 'border border-danger-line bg-danger-soft text-danger' : 'bg-ink text-canvas'
           }`}
         >
-          <Icon name={toast.error ? 'alert' : 'circleCheck'} className="h-5 w-5" />
+          <Icon name={toast.error ? 'alert' : 'circleCheck'} className={`h-5 w-5 ${toast.error ? 'text-attention' : ''}`} />
           <span className="font-medium">{toast.text}</span>
           {toast.filePath && showInFolder && (
             <button type="button" onClick={() => void showInFolder(toast.filePath!)}

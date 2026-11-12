@@ -72,12 +72,12 @@ function OverviewTile({ tile, loading }: { tile: Tile; loading: boolean }) {
           </p>
         </>
       ) : (
-        <p className="mt-2 text-3xl font-bold tracking-tight text-ink tabular-nums">
+        <p className="font-display mt-2 text-3xl font-bold tracking-tight text-ink tabular-nums">
           {tile.value}
           {tile.suffix && <span className="ml-1 text-base font-medium text-muted">{tile.suffix}</span>}
         </p>
       )}
-      {tile.note && <p className="mt-2 text-xs text-muted">{tile.note}</p>}
+      {tile.note && <p className="mt-2 text-xs text-helper">{tile.note}</p>}
     </section>
   )
 }
@@ -96,7 +96,7 @@ export default function OverviewTiles() {
   if (overview.error) {
     return (
       <p className="flex items-center gap-2 rounded-xl border border-danger-line bg-danger-soft p-5 text-sm text-danger">
-        <Icon name="alert" className="h-4 w-4" />
+        <Icon name="alert" className="h-4 w-4 text-attention" />
         Could not load the key metrics: {getErrorMessage(overview.error)}
       </p>
     )

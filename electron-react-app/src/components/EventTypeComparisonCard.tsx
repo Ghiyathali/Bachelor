@@ -69,8 +69,8 @@ export default function EventTypeComparisonCard() {
       </label>
       <button className="rounded-md px-3 py-2 text-sm text-brand-ink hover:bg-hover" onClick={() => setFilters({})}>Reset dates</button>
     </div>
-    <p className="mb-4 text-xs text-muted">Dates refer to event starts. Satisfaction requires at least 5 feedback responses per type; participants require at least 5 accepted registrations per type. Suppressed values have no bar and sort last. Participants count accepted places across events, so a person may be counted more than once.</p>
-    <p className="mb-4 text-xs text-muted">Also follows the dashboard filters above.</p>
+    <p className="mb-4 text-xs text-helper">Dates refer to event starts. Satisfaction requires at least 5 feedback responses per type; participants require at least 5 accepted registrations per type. Suppressed values have no bar and sort last. Participants count accepted places across events, so a person may be counted more than once.</p>
+    <p className="mb-4 text-xs text-helper">Also follows the dashboard filters above.</p>
     {invalidRange ? <p role="alert" className="text-sm text-danger">From must be on or before To.</p>
       : combined.noOverlap ? <p className="py-24 text-center text-sm text-muted">This chart’s dates do not overlap with the dashboard filters.</p>
       : comparison.isLoading ? <p role="status" className="py-24 text-center text-sm text-muted">Loading event types…</p>

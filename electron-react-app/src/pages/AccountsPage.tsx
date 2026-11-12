@@ -94,7 +94,7 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
         {remove.error && <p role="alert" className="mt-4 text-danger">{getErrorMessage(remove.error)}</p>}
         <div className="mt-6 flex justify-end gap-3">
           <button ref={cancelDelete} type="button" disabled={busy} onClick={backToEditing} className="rounded border border-line-strong px-4 py-2 disabled:opacity-40">Cancel</button>
-          <button type="button" disabled={busy} onClick={() => remove.mutate()} className="rounded bg-rose-700 px-4 py-2 font-medium text-white hover:bg-rose-600 disabled:opacity-40">{remove.isPending ? 'Deleting…' : 'Delete permanently'}</button>
+          <button type="button" disabled={busy} onClick={() => remove.mutate()} className="rounded bg-danger-strong px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-40">{remove.isPending ? 'Deleting…' : 'Delete permanently'}</button>
         </div>
       </div>}
     </dialog>
