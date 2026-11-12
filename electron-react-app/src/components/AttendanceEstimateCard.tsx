@@ -13,8 +13,8 @@ function Message({ children, error = false }: { children: ReactNode; error?: boo
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return <div className="rounded-lg border border-line bg-canvas p-4">
     <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
-    <p className="mt-1 text-3xl font-bold text-ink">{value}</p>
-    <p className="mt-1 text-xs text-muted">{hint}</p>
+    <p className="font-display mt-1 text-3xl font-bold text-ink">{value}</p>
+    <p className="mt-1 text-xs text-helper">{hint}</p>
   </div>
 }
 
@@ -66,7 +66,7 @@ export default function AttendanceEstimateCard() {
             Based on {data.basedOnEvents} past “{data.eventTypeName}” events with sign-ups, counting accepted participants.
           </p>
         </>}
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-xs text-helper">
         An estimate from past trends, not a guarantee. Not affected by the dashboard filters above.
       </p>
     </div>

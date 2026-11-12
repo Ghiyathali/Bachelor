@@ -92,7 +92,7 @@ export default function QrCodePage() {
       <div className="mt-8 flex justify-center print:m-0 print:block">
         <div className="flex aspect-[210/297] w-full max-w-md flex-col items-center rounded-sm border border-line bg-white px-10 pb-8 pt-12 text-center text-black shadow-card print:h-screen print:max-w-none print:aspect-auto print:rounded-none print:border-0 print:px-[20mm] print:pb-[10mm] print:pt-[18mm] print:shadow-none">
           <img src={pangaeaLogo} alt="Pangaea Youth Network" className="w-40 max-w-full print:w-[70mm]" />
-          <p className="mt-8 text-3xl font-bold tracking-tight text-stone-900 print:mt-[18mm] print:text-[34pt]">
+          <p className="font-display mt-8 text-3xl font-bold tracking-tight text-stone-900 print:mt-[18mm] print:text-[34pt]">
             Scan to give feedback
           </p>
           {error && <p className="mt-8 text-red-700">{error}</p>}

@@ -28,10 +28,15 @@ const CONTENT_WIDTH = WIDTH - MARGIN * 2
 
 const INK = '#0f172a'
 const MUTED = '#475569'
+const HELPER = '#d9d9d9' // PYN Light Grey, for helper texts
 const LINE = '#cbd5e1'
-const TILE = '#f1f5f9'
-const BLUE = '#0284c7'
-const GREEN = '#059669'
+// PYN visual identity: Violet Blue and Tealish Green for the bars, Lavender for the tiles.
+const TILE = '#f4f1fe'
+const BLUE = '#6a02c6' // Violet Blue
+const GREEN = '#12cc62' // Tealish Green (bars only: too light for text)
+const VIOLET = '#6a02c6'
+// Signika for titles and Oxygen for text, with common fonts as a fallback where they aren't installed.
+const DISPLAY_FONT = 'Signika, Oxygen, Arial, Helvetica, sans-serif'
 
 const NOT_ENOUGH_DATA = 'Not enough data'
 
@@ -55,7 +60,8 @@ interface TextStyle {
 
 function text(x: number, y: number, value: string, style: TextStyle = {}): string {
   const { size = 12, bold = false, fill = INK, anchor = 'start' } = style
-  return `<text x="${x}" y="${y}" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="${fill}" text-anchor="${anchor}">${escapeXml(value)}</text>`
+  const font = bold && size >= 13 ? ` font-family="${DISPLAY_FONT}"` : ''
+  return `<text x="${x}" y="${y}" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="${fill}" text-anchor="${anchor}"${font}>${escapeXml(value)}</text>`
 }
 
 function rect(x: number, y: number, width: number, height: number, fill: string, radius = 0): string {
@@ -110,7 +116,7 @@ function drawTiles(overview: DashboardOverview, top: number): string {
 }
 
 function drawHeading(title: string, description: string, top: number): string {
-  return text(MARGIN, top, title, { size: 16, bold: true }) + text(MARGIN, top + 18, description, { size: 11, fill: MUTED })
+  return text(MARGIN, top, title, { size: 16, bold: true }) + text(MARGIN, top + 18, description, { size: 11, fill: HELPER })
 }
 
 const SATISFACTION_PLOT_HEIGHT = 130
@@ -199,11 +205,11 @@ function drawReturning(returning: ReturningParticipants, top: number): string {
     text(MARGIN + 14, top + 24, 'Returning participants', { size: 13, bold: true }),
     hidden
       ? text(MARGIN + 14, top + 50, NOT_ENOUGH_DATA, { size: 13, bold: true, fill: MUTED })
-      : text(MARGIN + 14, top + 56, `${returning.returningPercent?.toFixed(1)} %`, { size: 26, bold: true, fill: GREEN }),
+      : text(MARGIN + 14, top + 56, `${returning.returningPercent?.toFixed(1)} %`, { size: 26, bold: true, fill: VIOLET }),
     // FR-09: the report must say what this figure does and does not mean.
-    text(MARGIN + 170, top + 24, hidden ? 'Fewer than 5 participants answered this question.' : `Based on ${returning.answered} answers.`, { size: 11, fill: MUTED }),
-    text(MARGIN + 170, top + 42, 'This figure is self-reported on the sign-up form.', { size: 11, fill: MUTED }),
-    text(MARGIN + 170, top + 58, 'It covers any previous Pangaea event, not a specific event type.', { size: 11, fill: MUTED }),
+    text(MARGIN + 170, top + 24, hidden ? 'Fewer than 5 participants answered this question.' : `Based on ${returning.answered} answers.`, { size: 11, fill: HELPER }),
+    text(MARGIN + 170, top + 42, 'This figure is self-reported on the sign-up form.', { size: 11, fill: HELPER }),
+    text(MARGIN + 170, top + 58, 'It covers any previous Pangaea event, not a specific event type.', { size: 11, fill: HELPER }),
   ].join('')
 }
 
@@ -233,11 +239,11 @@ export function buildReportSvg(data: ReportData): string {
   parts.push(drawReturning(data.returning, y))
 
   parts.push(
-    text(MARGIN, HEIGHT - 32, 'To protect privacy, numbers based on fewer than 5 people are hidden (“Not enough data”). The report contains no personal data.', { size: 10, fill: MUTED }),
+    text(MARGIN, HEIGHT - 32, 'To protect privacy, numbers based on fewer than 5 people are hidden (“Not enough data”). The report contains no personal data.', { size: 10, fill: HELPER }),
   )
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Arial, Helvetica, sans-serif" role="img" aria-label="Impact report">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="Oxygen, Arial, Helvetica, sans-serif" role="img" aria-label="Impact report">` +
     parts.join('') +
     '</svg>'
   )

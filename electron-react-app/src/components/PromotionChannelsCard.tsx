@@ -41,9 +41,9 @@ export default function PromotionChannelsCard() {
         : <>
           <ResponsiveBarChart data={chartData} series={series} xAxisLabel="Channel" yAxisLabel="Participants"
             formatTooltip={(datum, _series, value) => `${datum.description} · ${value} participant${value === 1 ? '' : 's'}`} />
-          {hiddenOther && <p className="mt-2 text-xs text-muted">Other: fewer than 5 people (not shown).</p>}
+          {hiddenOther && <p className="mt-2 text-xs text-helper">Other: fewer than 5 people (not shown).</p>}
         </>}
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-xs text-helper">
         From the sign-up form (“How did you hear about us?”). Only accepted participants who answered are counted. Channels chosen by fewer than 5 people are grouped into Other.
       </p>
     </div>

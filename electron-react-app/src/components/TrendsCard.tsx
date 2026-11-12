@@ -45,9 +45,9 @@ export default function TrendsCard() {
       </label>
       <button className="rounded-md px-3 py-2 text-sm text-brand-ink hover:bg-hover" onClick={() => setFilters(f => ({ interval: f.interval }))}>Reset filters</button>
     </div>
-    {filters.interval === 'season' && <p className="mb-4 text-xs text-muted">Winter: Dec–Feb · Spring: Mar–May · Summer: Jun–Aug · Autumn: Sep–Nov. Date filters may include only part of a season.</p>}
+    {filters.interval === 'season' && <p className="mb-4 text-xs text-helper">Winter: Dec–Feb · Spring: Mar–May · Summer: Jun–Aug · Autumn: Sep–Nov. Date filters may include only part of a season.</p>}
     {events.error && <p role="alert" className="mb-3 text-sm text-danger">Could not load event options: {getErrorMessage(events.error)}</p>}
-    <p className="mb-4 text-xs text-muted">Also follows the dashboard filters above. Values based on fewer than 5 people are hidden.</p>
+    <p className="mb-4 text-xs text-helper">Also follows the dashboard filters above. Values based on fewer than 5 people are hidden.</p>
     {invalidRange ? <p role="alert" className="text-sm text-danger">From must be on or before To.</p>
       : combined.noOverlap ? <p className="py-24 text-center text-sm text-muted">This chart’s event or dates do not overlap with the dashboard filters.</p>
       : trends.isLoading ? <p role="status" className="py-24 text-center text-sm text-muted">Loading trends…</p>

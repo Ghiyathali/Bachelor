@@ -89,7 +89,7 @@ function ParticipantsPerMonth() {
       <div className="mt-2 flex items-baseline gap-2">
         {total.isLoading ? <Skeleton className="h-8 w-16" />
           : total.data?.totalParticipants == null ? <span className="text-base font-semibold text-muted">Not enough data</span>
-          : <span className="text-3xl font-bold tracking-tight text-ink tabular-nums">{total.data.totalParticipants}</span>}
+          : <span className="font-display text-3xl font-bold tracking-tight text-ink tabular-nums">{total.data.totalParticipants}</span>}
         <span className="text-sm text-muted">participants</span>
       </div>
 
@@ -175,8 +175,8 @@ function KeyNumbers() {
               <p className="text-sm text-muted">{row.label}</p>
               {row.loading ? <Skeleton className="mt-1 h-7 w-24" />
                 : row.value === null ? <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-muted"><Icon name="lock" className="h-4 w-4" />Not enough data</p>
-                : <p className="truncate text-2xl font-bold tracking-tight text-ink tabular-nums">{row.value}</p>}
-              {row.detail && !row.loading && <p className="text-xs text-muted">{row.detail}</p>}
+                : <p className="font-display truncate text-2xl font-bold tracking-tight text-ink tabular-nums">{row.value}</p>}
+              {row.detail && !row.loading && <p className="text-xs text-helper">{row.detail}</p>}
             </div>
           </li>
         ))}

@@ -88,7 +88,7 @@ export default function LoginPage() {
       </form>
 
       {/* #52: accounts are created by an Admin, there is no self-registration */}
-      <p className="mt-6 border-t border-line pt-5 text-xs leading-5 text-muted">
+      <p className="mt-6 border-t border-line pt-5 text-xs leading-5 text-helper">
         No account yet? Ask an administrator to create one for you.
       </p>
     </section>

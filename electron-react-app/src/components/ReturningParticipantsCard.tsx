@@ -39,16 +39,16 @@ export default function ReturningParticipantsCard() {
         // NFR-02: fewer than 5 answers (including none) are never shown.
         : !data || data.returningPercent === null ? <Message>Not enough data: fewer than 5 participants answered this question for these filters.</Message>
         : <>
-          <p className="text-4xl font-bold text-success">{data.returningPercent.toFixed(1)}%</p>
+          <p className="font-display text-4xl font-bold text-success">{data.returningPercent.toFixed(1)}%</p>
           <p className="mt-1 text-sm text-muted">returning participants · based on {data.answered} answers</p>
           <h3 className="mb-2 mt-6 text-sm font-medium text-body">By event type</h3>
           <ResponsiveBarChart data={chartData} series={series} xAxisLabel="Event type" yAxisLabel="Returning (%)" yMax={100}
             formatTooltip={(datum, _series, value) => `${datum.description} · ${value.toFixed(1)}% returning`} />
-          {hiddenTypes > 0 && <p className="mt-2 text-xs text-muted">
+          {hiddenTypes > 0 && <p className="mt-2 text-xs text-helper">
             {hiddenTypes} event type{hiddenTypes === 1 ? '' : 's'} hidden: fewer than 5 answers.
           </p>}
         </>}
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-xs text-helper">
         Self-reported on the sign-up form (“Have you attended before?”). Only accepted participants who answered are counted.
       </p>
     </div>
