@@ -4,6 +4,8 @@ import { getFilterOptions } from '../api/dashboard'
 import { getErrorMessage } from '../api/client'
 import { AGE_BAND_LABELS, SEASON_LABELS, hasPeopleFilter, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 
+const GENDERS = ['Female', 'Male']
+
 const inputClass =
   'mt-1 block w-full rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink'
 
@@ -103,7 +105,8 @@ export default function DashboardFilterBar() {
           <select className={inputClass} value={filters.gender ?? ''}
             onChange={(e) => setFilter('gender', e.target.value)}>
             <option value="">All genders</option>
-            {options.data?.genders.map((gender) => <option key={gender} value={gender}>{gender}</option>)}
+            {/* Group decision: only Female and Male can be picked; everyone else is in "All genders". */}
+            {GENDERS.map((gender) => <option key={gender} value={gender}>{gender}</option>)}
           </select>
         </Field>
       </div>

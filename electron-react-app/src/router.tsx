@@ -17,6 +17,31 @@ import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
 import SettingsPage from './pages/SettingsPage'
 import { isLoggedIn, useAuthStore } from './stores/authStore'
+import { useDashboardFilterStore } from './stores/dashboardFilterStore'
+import { useDashboardPreferencesStore } from './stores/dashboardPreferencesStore'
+import { getDefaultDateRange } from './stores/defaultDateRange'
+import { clearRememberedFilters, readRememberedFilters, saveRememberedFilters } from './stores/rememberedDashboardFilters'
+import { filtersOnDashboardEnter } from './stores/dashboardEntryFilters'
+
+// Only save filters belonging to the account that last opened the dashboard.
+let dashboardOwner: string | undefined
+// After logging out, the next visit counts as a first visit again (default date range).
+useAuthStore.subscribe(state => {
+  if (!state.token) dashboardOwner = undefined
+})
+useDashboardFilterStore.subscribe(state => {
+  const username = useAuthStore.getState().user?.username
+  if (username && username === dashboardOwner && useDashboardPreferencesStore.getState().rememberFilters) {
+    saveRememberedFilters(username, state.filters)
+  }
+})
+useDashboardPreferencesStore.subscribe((state, previous) => {
+  if (state.rememberFilters === previous.rememberFilters) return
+  const username = useAuthStore.getState().user?.username
+  if (!username) return
+  if (!state.rememberFilters) clearRememberedFilters(username)
+  else if (username === dashboardOwner) saveRememberedFilters(username, useDashboardFilterStore.getState().filters)
+})
 
 // Guard for protected pages: no valid token -> go to /login.
 async function requireAuth() {
@@ -77,6 +102,21 @@ const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'dashboard',
   beforeLoad: requireRole(DASHBOARD_ROLES),
+  onEnter: () => {
+    const username = useAuthStore.getState().user!.username
+    const preferences = useDashboardPreferencesStore.getState()
+    const remembered = preferences.rememberFilters ? readRememberedFilters(username) : undefined
+    const firstVisit = dashboardOwner !== username
+    dashboardOwner = username
+    useDashboardFilterStore.setState(state => ({
+      filters: filtersOnDashboardEnter({
+        remembered,
+        firstVisit,
+        current: state.filters,
+        defaultDates: getDefaultDateRange(preferences.defaultDateRange),
+      }),
+    }))
+  },
   component: DashboardPage,
 })
 
