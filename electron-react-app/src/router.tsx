@@ -9,8 +9,9 @@ import {
 import { refreshSession } from './auth/session'
 import App from './App'
 import AccountsPage from './pages/AccountsPage'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import DashboardPage from './pages/DashboardPage'
+import EventsPage from './pages/EventsPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import QrCodePage from './pages/QrCodePage'
@@ -151,6 +152,14 @@ const accountsRoute = createRoute({
   component: AccountsPage,
 })
 
+// Walk-ins: only Admin and Event Manager.
+const eventsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'events',
+  beforeLoad: requireRole(EVENT_MANAGEMENT_ROLES),
+  component: EventsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   dashboardRoute,
@@ -159,6 +168,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   accountsRoute,
+  eventsRoute,
 ])
 
 export const router = createRouter({

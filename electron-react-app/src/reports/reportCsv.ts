@@ -33,6 +33,7 @@ export function buildReportCsv(data: ReportData): string {
     ['Section', 'Item', 'Measure', 'Value'],
     ['Headline', 'All events', 'Total events', String(overview.totalEvents)],
     ['Headline', 'All events', 'Participants', count(overview.totalParticipants)],
+    ...(overview.walkIns ? [['Headline', 'All events', 'Walk-ins included in participants', String(overview.walkIns)]] : []),
     ['Headline', 'All events', 'Average satisfaction (1-5)', percent(overview.averageSatisfaction)],
     ['Headline', 'All events', 'Feedback responses', count(overview.feedbackResponses)],
     ['Headline', 'All events', 'Acceptance rate (%)', percent(overview.acceptanceRate)],
@@ -52,6 +53,7 @@ export function buildReportCsv(data: ReportData): string {
   for (const event of attendance.events) {
     rows.push(['Sign-ups per event', event.eventName, 'Signed up', count(event.signedUpCount)])
     rows.push(['Sign-ups per event', event.eventName, 'Accepted', count(event.acceptedCount)])
+    if (event.walkInCount != null) rows.push(['Sign-ups per event', event.eventName, 'Walk-ins', String(event.walkInCount)])
   }
 
   rows.push(['Returning participants', 'All events', 'Returning (%)', percent(returning.returningPercent)])

@@ -55,6 +55,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
             entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
+            entity.ToTable(table => table.HasCheckConstraint("CK_Events_WalkIns", "\"WalkIns\" >= 0"));
 
             // #69: one PYN event = at most one row here (empty for events made in our app).
             entity.HasIndex(eventItem => eventItem.ExternalId).IsUnique();

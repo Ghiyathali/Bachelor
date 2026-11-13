@@ -7,6 +7,7 @@ export interface BarSeries {
   key: string
   label: string
   color: string
+  stroke?: string // outline, for light colours like lavender that would vanish on white
 }
 
 export interface BarChartDatum {
@@ -144,6 +145,8 @@ export default function ResponsiveBarChart({
                     height={Math.max(0, innerHeight - barY)}
                     rx={3}
                     fill={item.color}
+                    stroke={item.stroke}
+                    strokeWidth={item.stroke ? 1 : undefined}
                     className="outline-none transition-opacity hover:opacity-80 focus:opacity-80"
                     tabIndex={0}
                     aria-label={formatTooltip(datum, item, value)}

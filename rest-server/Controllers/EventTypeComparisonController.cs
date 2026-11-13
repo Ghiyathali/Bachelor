@@ -45,7 +45,7 @@ public class EventTypeComparisonController(AppDbContext db) : ControllerBase
         // Aggregate separately so feedback and registrations cannot multiply each other.
         // Null types form one Uncategorised group; unused types are not included.
         var counts = await events.GroupBy(e => new { e.EventTypeId, Name = e.EventType == null ? "Uncategorised" : e.EventType.Name })
-            .Select(g => new { g.Key.EventTypeId, g.Key.Name, Count = g.Count() })
+            .Select(g => new { g.Key.EventTypeId, g.Key.Name, Count = g.Count(), WalkIns = g.Sum(e => e.WalkIns) })
             .ToListAsync(cancellationToken);
         var feedback = await db.Feedback.Where(f => events.Any(e => e.Id == f.EventId))
             .GroupBy(f => f.Event.EventTypeId)
@@ -63,6 +63,8 @@ public class EventTypeComparisonController(AppDbContext db) : ControllerBase
         {
             var ratings = feedback.SingleOrDefault(f => f.TypeId == g.EventTypeId);
             var accepted = participants.SingleOrDefault(p => p.TypeId == g.EventTypeId)?.Count ?? 0;
+            // Walk-ins count as participants too, unless a city/age/gender filter is used.
+            accepted += filter.IncludesWalkIns ? g.WalkIns : 0;
             return new EventTypeComparison(g.EventTypeId, g.Name, g.Count,
                 ratings is { Count: >= 5 } ? ratings.Average : null,
                 accepted >= 5 ? accepted : null);

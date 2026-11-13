@@ -72,3 +72,17 @@ test('extra fields, like personal data, never reach the file', () => {
   const event = { eventId: 1, eventName: 'Camp', startsAt: '2026-07-01', signedUpCount: 9, acceptedCount: 8, email: 'person@example.com' }
   assert.ok(!buildReportCsv(reportData({ attendance: { events: [event] } })).includes('person@example.com'))
 })
+
+test('walk-ins: included in the headline and listed per event when known', () => {
+  const rows = lines(buildReportCsv(reportData({
+    overview: { totalEvents: 8, totalParticipants: 56, averageSatisfaction: 3.94, feedbackResponses: 68, acceptanceRate: 71.4, walkIns: 11 },
+    attendance: { events: [
+      { eventId: 1, eventName: 'Football Day', startsAt: '2026-06-01', signedUpCount: 12, acceptedCount: 9, walkInCount: 6 },
+      { eventId: 2, eventName: 'Art Jam', startsAt: '2026-07-01', signedUpCount: 11, acceptedCount: 9, walkInCount: null },
+    ] },
+  })))
+  assert.ok(rows.includes('Headline;All events;Participants;56'))
+  assert.ok(rows.includes('Headline;All events;Walk-ins included in participants;11'))
+  assert.ok(rows.includes('Sign-ups per event;Football Day;Walk-ins;6'))
+  assert.ok(!rows.some(r => r.startsWith('Sign-ups per event;Art Jam;Walk-ins')))
+})

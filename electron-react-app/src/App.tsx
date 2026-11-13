@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { refreshSession } from './auth/session'
 import { Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 import pangaeaLogo from '../pangaea-logo.png'
 
@@ -66,6 +66,7 @@ export default function App() {
             <nav className="app-navigation" aria-label="Main navigation">
               <Link to="/" activeOptions={{ exact: true }} className="app-nav-link">Overview</Link>
               {hasRole(user.role, DASHBOARD_ROLES) && <Link to="/dashboard" className="app-nav-link">Dashboard</Link>}
+              {hasRole(user.role, EVENT_MANAGEMENT_ROLES) && <Link to="/events" className="app-nav-link">Events</Link>}
               {hasRole(user.role, QR_CODE_ROLES) && <Link to="/qr-code" className="app-nav-link">QR code</Link>}
               {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && <Link to="/accounts" className="app-nav-link">Manage accounts</Link>}
               <Link to="/settings" className="app-nav-link">Settings</Link>
