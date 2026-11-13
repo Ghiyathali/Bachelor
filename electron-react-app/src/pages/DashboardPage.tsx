@@ -16,7 +16,7 @@ import EventTypeComparisonCard from '../components/EventTypeComparisonCard'
 import ReturningParticipantsCard from '../components/ReturningParticipantsCard'
 import PromotionChannelsCard from '../components/PromotionChannelsCard'
 import AttendanceEstimateCard from '../components/AttendanceEstimateCard'
-import AttendanceByEventChart from '../components/charts/AttendanceByEventChart'
+import AttendanceByEventChart, { hasWalkIns } from '../components/charts/AttendanceByEventChart'
 import SatisfactionDistributionChart from '../components/charts/SatisfactionDistributionChart'
 
 function ChartCard({
@@ -118,7 +118,9 @@ export default function DashboardPage() {
 
         <ChartCard
           title="Sign-ups per event"
-          description="Everyone who signed up compared with those who got a spot"
+          description={attendance.data && hasWalkIns(attendance.data)
+            ? 'Everyone who signed up, those who got a spot, and walk-ins'
+            : 'Everyone who signed up compared with those who got a spot'}
         >
           {attendance.isLoading && <ChartMessage>Loading attendance data…</ChartMessage>}
           {attendance.error && <ChartMessage error>{getErrorMessage(attendance.error)}</ChartMessage>}
@@ -130,6 +132,9 @@ export default function DashboardPage() {
               <div className="mb-1 flex flex-wrap justify-end gap-4 text-xs text-body">
                 <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-chart-primary" />Signed up</span>
                 <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-chart-secondary" />Accepted</span>
+                {hasWalkIns(attendance.data) && (
+                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-chart-primary bg-brand-soft" />Walk-ins</span>
+                )}
               </div>
               <AttendanceByEventChart data={attendance.data} />
             </>

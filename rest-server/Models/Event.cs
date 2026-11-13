@@ -9,6 +9,11 @@ public class Event
     public string? Location { get; set; }
     public bool IsFeedbackOpen { get; set; }
 
+    // Walk-ins: people who came without signing up, entered by staff after the event.
+    // Only a number, never a person, so nobody can be counted twice and no personal data is stored.
+    // They count in participant totals, but not in city/age/gender breakdowns (FR-03: unknown values).
+    public int WalkIns { get; set; }
+
     // #53: optional - events created before types existed (or not yet categorised) stay valid.
     // Deleting a type sets this back to null; the event itself is kept.
     public int? EventTypeId { get; set; }

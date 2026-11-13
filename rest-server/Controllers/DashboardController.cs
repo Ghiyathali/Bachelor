@@ -20,7 +20,8 @@ public record EventAttendance(
     string EventName,
     DateTimeOffset StartsAt,
     int? SignedUpCount,
-    int? AcceptedCount);
+    int? AcceptedCount,
+    int? WalkInCount = null);   // null: no walk-ins, under 5, or a city/age/gender filter is used
 
 public record AttendanceByEventResponse(IReadOnlyList<EventAttendance> Events);
 
@@ -30,7 +31,8 @@ public record OverviewResponse(
     int? TotalParticipants,
     double? AverageSatisfaction,
     int? FeedbackResponses,
-    double? AcceptanceRate);
+    double? AcceptanceRate,
+    int? WalkIns = null);   // the walk-ins included in TotalParticipants (null: none, under 5, or people filter)
 
 // #25: the choices for the filter bar's dropdowns.
 public record FilterOption(int Id, string Name);
@@ -63,21 +65,25 @@ public class DashboardController(AppDbContext db) : ControllerBase
         var feedbackResponses = await feedback.CountAsync();
         var averageRating = await feedback.AverageAsync(item => (double?)item.Rating);
 
-        // Participants = sign-ups with status Accepted (got a spot at the event).
+        // Participants = sign-ups with status Accepted (got a spot at the event) + walk-ins.
         // Pangaea's sign-up data has no "attended" status, so Accepted is the closest measure.
         var signUps = filter.ApplyToSignUps(db.EventRegistrations, events);
         var accepted = await signUps.CountAsync(registration => registration.Status == RegistrationStatus.Accepted);
         var signedUp = await signUps.CountAsync();
+        var walkIns = filter.IncludesWalkIns ? await events.SumAsync(eventItem => eventItem.WalkIns) : 0;
 
         // NFR-02: hide every people-based number that covers fewer than 5 people.
         var enoughFeedback = feedbackResponses >= DashboardFilter.MinGroupSize;
         var enoughSignUps = signedUp >= DashboardFilter.MinGroupSize;
+        // The acceptance rate stays sign-ups only: walk-ins never signed up, so they were never "accepted".
+        var participants = DashboardFilter.Suppress(accepted + walkIns);
         return Ok(new OverviewResponse(
             totalEvents,
-            DashboardFilter.Suppress(accepted),
+            participants,
             enoughFeedback ? Math.Round(averageRating!.Value, 1) : null,
             DashboardFilter.Suppress(feedbackResponses),
-            enoughSignUps ? Math.Round(100.0 * accepted / signedUp, 1) : null));
+            enoughSignUps ? Math.Round(100.0 * accepted / signedUp, 1) : null,
+            participants is null ? null : DashboardFilter.Suppress(walkIns)));
     }
 
     // #25: the dropdown choices for the filter bar. A city or gender is only offered when
@@ -160,7 +166,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
         var events = await filteredEvents
             .OrderByDescending(eventItem => eventItem.StartsAt)
             .Take(limit)
-            .Select(eventItem => new { eventItem.Id, eventItem.Name, eventItem.StartsAt })
+            .Select(eventItem => new { eventItem.Id, eventItem.Name, eventItem.StartsAt, eventItem.WalkIns })
             .ToListAsync();
 
         // SignedUp = every sign-up for the event; Accepted = the ones who got a spot.
@@ -184,7 +190,8 @@ public class DashboardController(AppDbContext db) : ControllerBase
                 var count = counts.GetValueOrDefault(e.Id);
                 return new EventAttendance(e.Id, e.Name, e.StartsAt,
                     DashboardFilter.Suppress(count?.SignedUp ?? 0),
-                    DashboardFilter.Suppress(count?.Accepted ?? 0));
+                    DashboardFilter.Suppress(count?.Accepted ?? 0),
+                    filter.IncludesWalkIns ? DashboardFilter.Suppress(e.WalkIns) : null);
             })
             .Reverse()
             .ToList();

@@ -39,6 +39,8 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         ("POST", "/api/events", RoleNames.EventManagement, new { name = "" }),
         ("PATCH", "/api/events/2147483647/feedback-status", RoleNames.EventManagement, new { isFeedbackOpen = true }),
         ("PATCH", "/api/events/2147483647/event-type", RoleNames.EventManagement, new { eventTypeId = (int?)null }),
+        ("GET", "/api/events/walk-ins", RoleNames.EventManagement, null),
+        ("PATCH", "/api/events/2147483647/walk-ins", RoleNames.EventManagement, new { walkIns = 1 }),
     ];
 
     public static IEnumerable<object[]> Matrix() => Roles.SelectMany(role => Endpoints.Select((_, index) => new object[] { role, index }));

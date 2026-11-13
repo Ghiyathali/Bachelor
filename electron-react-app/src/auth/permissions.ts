@@ -1,6 +1,8 @@
 // Which roles may generate and print the QR code (FR-12).
 // The names must match the roles seeded in the backend (AppDbContext.cs).
 export const QR_CODE_ROLES = ['Admin', 'Event Manager'] as const
+// Who may enter walk-ins on the Events page. The backend enforces the same rule (EventManagement).
+export const EVENT_MANAGEMENT_ROLES = ['Admin', 'Event Manager'] as const
 export const DASHBOARD_ROLES = ['Admin', 'Event Manager', 'Marketing Manager'] as const
 // Who may export the impact report (FR-11, FR-12). Its own list, because FR-12 says a
 // Standard User must never export, even if they get read-only dashboard access later.

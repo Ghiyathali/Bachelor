@@ -98,6 +98,9 @@ namespace RestServer.Migrations
                     b.Property<DateTimeOffset>("StartsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("WalkIns")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventTypeId");
@@ -105,7 +108,10 @@ namespace RestServer.Migrations
                     b.HasIndex("ExternalId")
                         .IsUnique();
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", t =>
+                        {
+                            t.HasCheckConstraint("CK_Events_WalkIns", "\"WalkIns\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("RestServer.Models.EventRegistration", b =>

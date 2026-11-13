@@ -109,7 +109,7 @@ export default function OverviewTiles() {
   const privacy = ' Hidden when fewer than 5 people.'
   const tiles: Tile[] = [
     { label: 'Total events', icon: 'calendar', help: 'Events that match the filters.', value: count(data?.totalEvents) },
-    { label: 'Participants', icon: 'users', help: 'People who got a spot at an event (accepted sign-ups).' + privacy, value: count(data?.totalParticipants) },
+    { label: 'Participants', icon: 'users', help: 'People who got a spot at an event (accepted sign-ups), plus walk-ins who came without signing up.' + privacy, value: count(data?.totalParticipants), note: data?.walkIns ? `Includes ${data.walkIns} walk-ins` : undefined },
     {
       label: 'Average satisfaction',
       icon: 'star',

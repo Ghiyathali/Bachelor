@@ -20,6 +20,7 @@ export interface EventAttendance {
   startsAt: string
   signedUpCount: number | null
   acceptedCount: number | null
+  walkInCount?: number | null // null: none, under 5, or a city/age/gender filter
 }
 
 export interface AttendanceByEvent {
@@ -33,6 +34,7 @@ export interface DashboardOverview {
   averageSatisfaction: number | null
   feedbackResponses: number | null
   acceptanceRate: number | null
+  walkIns?: number | null // the walk-ins included in totalParticipants (null: none, under 5, or people filter)
 }
 
 export async function getDashboardOverview(filters: DashboardFilters = {}): Promise<DashboardOverview> {

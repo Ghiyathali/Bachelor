@@ -40,12 +40,12 @@ public class AttendanceEstimateController(AppDbContext db) : ControllerBase
         if (type is null)
             return NotFound(new { message = "Event type not found." });
 
-        // Past events of this type, one number each: how many got a spot (Accepted).
-        // Events without any sign-up are left out - that means "no data", not "nobody came".
+        // Past events of this type, one number each: how many got a spot (Accepted) + walk-ins.
+        // Events without any sign-up or walk-in are left out - that means "no data", not "nobody came".
         var now = DateTimeOffset.UtcNow;
         var past = await db.Events.AsNoTracking()
-            .Where(e => e.EventTypeId == type.Id && e.StartsAt < now && e.Registrations.Any())
-            .Select(e => new PastEvent(e.StartsAt, e.Registrations.Count(r => r.Status == RegistrationStatus.Accepted)))
+            .Where(e => e.EventTypeId == type.Id && e.StartsAt < now && (e.Registrations.Any() || e.WalkIns > 0))
+            .Select(e => new PastEvent(e.StartsAt, e.Registrations.Count(r => r.Status == RegistrationStatus.Accepted) + e.WalkIns))
             .ToListAsync(cancellationToken);
 
         var planned = new DateTimeOffset(date.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));

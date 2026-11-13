@@ -33,6 +33,9 @@ public class DashboardFilter
     public AgeBand? AgeBand { get; set; }
     public string? Gender { get; set; }
 
+    // Walk-ins have no city, age or gender, so they only count when no people filter is used.
+    public bool IncludesWalkIns => !HasPeopleFilter;
+
     public bool HasPeopleFilter =>
         !string.IsNullOrWhiteSpace(City) || AgeBand.HasValue || !string.IsNullOrWhiteSpace(Gender);
 

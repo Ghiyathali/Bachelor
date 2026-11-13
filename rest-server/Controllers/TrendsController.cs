@@ -54,7 +54,7 @@ public class TrendsController(AppDbContext db) : ControllerBase
         // UTC event dates are used even when feedback/sign-ups arrive in a later month.
         var eventMonths = await events
             .GroupBy(e => new { e.StartsAt.UtcDateTime.Year, e.StartsAt.UtcDateTime.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count(), WalkIns = g.Sum(e => e.WalkIns) })
             .ToListAsync(cancellationToken);
         var feedbackMonths = await db.Feedback.Where(f => events.Any(e => e.Id == f.EventId))
             .GroupBy(f => new { f.Event.StartsAt.UtcDateTime.Year, f.Event.StartsAt.UtcDateTime.Month })
@@ -78,6 +78,10 @@ public class TrendsController(AppDbContext db) : ControllerBase
             .ToDictionary(g => g.Key, g => (Count: g.Sum(m => m.Count), Sum: g.Sum(m => m.Sum)));
         var participants = participantMonths.GroupBy(m => Period(m.Year, m.Month))
             .ToDictionary(g => g.Key, g => g.Sum(m => m.Count));
+        // Walk-ins count as participants too, unless a city/age/gender filter is used (they have none).
+        var walkIns = filter.IncludesWalkIns
+            ? eventMonths.GroupBy(m => Period(m.Year, m.Month)).ToDictionary(g => g.Key, g => g.Sum(m => m.WalkIns))
+            : [];
         var first = from.HasValue ? Period(from.Value.Year, from.Value.Month)
             : eventCounts.Count > 0 ? eventCounts.Keys.Min() : (DateOnly?)null;
         var last = to.HasValue ? Period(to.Value.Year, to.Value.Month)
@@ -96,7 +100,7 @@ public class TrendsController(AppDbContext db) : ControllerBase
             var enoughFeedback = ratings.Count >= DashboardFilter.MinGroupSize;
             points.Add(new TrendPoint(date, count, DashboardFilter.Suppress(ratings.Count),
                 enoughFeedback ? (double)ratings.Sum / ratings.Count : null,
-                count == 0 ? null : DashboardFilter.Suppress(participants.GetValueOrDefault(date))));
+                count == 0 ? null : DashboardFilter.Suppress(participants.GetValueOrDefault(date) + walkIns.GetValueOrDefault(date))));
         }
         return Ok(new TrendsResponse(interval, points));
     }
