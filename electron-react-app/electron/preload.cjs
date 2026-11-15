@@ -4,6 +4,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
+  bundledServer: process.defaultApp !== true,
+  openDatabaseSettings: () => ipcRenderer.invoke('open-database-settings'),
   // Asks the main process to save the current page as a PDF (QR code page).
   savePdf: () => ipcRenderer.invoke('save-pdf'),
   // Asks the main process to save the impact report as an SVG, PDF or CSV (FR-11, #78).

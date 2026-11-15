@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Database connection</title>
+  <link rel="stylesheet" href="database-settings.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Pangaea · This device</p>
+    <h1>Database connection</h1>
+    <p>Enter the PostgreSQL connection string provided by your administrator. Saving restarts Pangaea to reconnect.</p>
+    <form id="connection-form">
+      <label for="postgres">PostgreSQL connection string</label>
+      <input id="postgres" type="password" autocomplete="off" spellcheck="false" required maxlength="16384" placeholder="Host=…;Database=…;Username=…;Password=…;SSL Mode=VerifyFull">
+      <label for="pyn">PYN source connection string <span>(optional)</span></label>
+      <input id="pyn" type="password" autocomplete="off" spellcheck="false" maxlength="16384" placeholder="Leave empty to disable PYN sync">
+      <p class="helper">Use the TLS settings required by your database provider. Existing secrets are never displayed. To update a connection, enter its complete replacement value, including the password.</p>
+      <p class="helper">Credentials are encrypted on this Mac using Keychain-backed storage. They are shared by app users on this macOS account. Saving does not test the database connection.</p>
+      <p id="status" role="status" aria-live="polite"></p>
+      <button type="submit">Save and restart</button>
+    </form>
+  </main>
+  <script src="database-settings.js"></script>
+</body>
+</html>

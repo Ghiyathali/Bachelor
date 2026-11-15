@@ -15,6 +15,13 @@ export default function SettingsPage() {
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-ink">Preferences</p>
       <h1 className="mt-3 text-4xl font-bold tracking-tight text-ink">Settings</h1>
       <p className="mt-3 text-sm text-muted">Make your workspace feel right for you.</p>
+      {window.electronAPI?.bundledServer && (
+        <section aria-labelledby="database-title" className="mt-8 rounded-xl border border-line bg-surface p-6 shadow-card">
+          <h2 id="database-title" className="text-lg font-semibold text-ink">Database connection</h2>
+          <p className="mt-2 text-sm leading-6 text-muted">Change the PostgreSQL connection for this device. Saving a new connection restarts the app.</p>
+          <button type="button" onClick={() => { void window.electronAPI?.openDatabaseSettings() }} className="mt-4 rounded-md bg-brand-ink px-4 py-2 text-sm font-medium text-white">Configure connection</button>
+        </section>
+      )}
       <section aria-labelledby="appearance-title" className="mt-8 rounded-xl border border-line bg-surface p-6 shadow-card">
         <h2 id="appearance-title" className="text-lg font-semibold text-ink">Appearance</h2>
         <div className="mt-6 flex items-center justify-between gap-6">
