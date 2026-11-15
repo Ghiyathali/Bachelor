@@ -4,6 +4,7 @@ import { Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 import pangaeaLogo from '../pangaea-logo.png'
+import SyncDatabaseButton from './components/SyncDatabaseButton'
 
 export default function App() {
   const navigate = useNavigate()
@@ -72,6 +73,7 @@ export default function App() {
               <Link to="/settings" className="app-nav-link">Settings</Link>
             </nav>
             <div className="app-sidebar-footer">
+              <SyncDatabaseButton />
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium" title={user.username}>{user.username}</p>
                 <p className="mt-1 text-xs text-muted">{user.role}</p>
