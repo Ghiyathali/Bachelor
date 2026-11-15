@@ -3,8 +3,16 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
 const fs = require('node:fs/promises')
 const path = require('node:path')
+const { startServer } = require('./server.cjs')
 
 const isDevelopment = !app.isPackaged
+if (!isDevelopment) {
+  app.setName('Pangaea')
+  app.setPath('userData', path.join(app.getPath('appData'), 'Pangaea'))
+}
+/** @type {Awaited<ReturnType<typeof startServer>> | undefined} */
+let server
+let quitting = false
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -19,9 +27,14 @@ function createWindow() {
 
   if (isDevelopment) {
     window.loadURL('http://localhost:5173')
-  } else {
-    window.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+  } else if (server) {
+    window.loadURL(server.origin)
   }
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  window.webContents.on('will-navigate', (event, url) => {
+    const origin = isDevelopment ? 'http://localhost:5173' : server?.origin
+    if (new URL(url).origin !== origin) event.preventDefault()
+  })
 }
 
 // "Save as PDF" for the QR code page (FR-02): ask where to save, then let Chromium
@@ -94,11 +107,43 @@ ipcMain.handle('show-in-folder', (_event, filePath) => {
   if (typeof filePath === 'string' && savedReports.has(filePath)) shell.showItemInFolder(filePath)
 })
 
-app.whenReady().then(() => {
+const hasInstanceLock = app.requestSingleInstanceLock()
+if (!hasInstanceLock) app.quit()
+app.on('second-instance', () => {
+  const window = BrowserWindow.getAllWindows()[0]
+  if (window) { if (window.isMinimized()) window.restore(); window.focus() }
+})
+
+if (hasInstanceLock) app.whenReady().then(async () => {
+  if (!isDevelopment) {
+    server = await startServer(app, dialog)
+    server.child.on('exit', () => {
+      if (!quitting) {
+        dialog.showErrorBox('Pangaea server stopped', 'The local server stopped unexpectedly. Reopen Pangaea to reconnect.')
+        app.quit()
+      }
+    })
+  }
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+}).catch(error => {
+  dialog.showErrorBox('Pangaea could not start', error.message)
+  app.quit()
+})
+
+app.on('before-quit', event => {
+  if (quitting) return
+  quitting = true
+  if (server && server.child.exitCode === null && server.child.signalCode === null) {
+    const child = server.child
+    event.preventDefault()
+    const timeout = setTimeout(() => { child.kill('SIGKILL'); app.quit() }, 5000)
+    child.once('exit', () => { clearTimeout(timeout); app.quit() })
+    child.stdin.end()
+    child.kill('SIGTERM')
+  }
 })
 
 app.on('window-all-closed', () => {

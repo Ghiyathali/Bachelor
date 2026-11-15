@@ -8,15 +8,26 @@ using Microsoft.IdentityModel.Tokens;
 using RestServer.Auth;
 using RestServer.Data;
 using RestServer.Sync;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 // Load env file
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-if (File.Exists(envFile))
+var desktopConfig = Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_CONFIG");
+var isDesktop = !string.IsNullOrEmpty(desktopConfig);
+if (!isDesktop && File.Exists(envFile))
 {
     DotNetEnv.Env.Load(envFile);
 }
 
 var builder = WebApplication.CreateBuilder(args);
+if (isDesktop)
+{
+    builder.Configuration.AddJsonFile(desktopConfig!, optional: false, reloadOnChange: false);
+    // Reuse the installation's port to preserve the renderer's localStorage origin.
+    var port = int.Parse(Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_PORT") ?? "0");
+    builder.WebHost.ConfigureKestrel(options => options.Listen(System.Net.IPAddress.Loopback, port));
+}
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -24,7 +35,7 @@ builder.Services.AddOpenApi();
 // ---------- Database ----------
 var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException(
-        "PostgreSQL is not configured. Set ConnectionStrings__Postgres in rest-server/.env.");
+        "PostgreSQL is not configured. Set ConnectionStrings:Postgres in desktop server.json or ConnectionStrings__Postgres in the server environment.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnectionString));
@@ -33,7 +44,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
 if (Encoding.UTF8.GetByteCount(jwtOptions.Key) < 32)
     throw new InvalidOperationException(
-        "JWT is not configured. Set Jwt__Key in rest-server/.env (at least 32 characters).");
+        "JWT is not configured. Set Jwt:Key in desktop server.json or Jwt__Key in the server environment (at least 32 characters).");
 
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddSingleton<TokenService>();
@@ -128,6 +139,15 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+if (isDesktop)
+{
+    // Electron owns the stdin pipe. EOF also stops the server if Electron crashes.
+    _ = Task.Run(async () =>
+    {
+        await Console.In.ReadToEndAsync();
+        app.Lifetime.StopApplication();
+    });
+}
 
 // #53: placeholder event types for a new, empty database (every environment).
 // Needs the AddEventTypes migration - run `dotnet tool run dotnet-ef database update` first.
@@ -149,7 +169,22 @@ if (app.Environment.IsDevelopment())
     await DevSeeder.SeedDashboardDemoDataAsync(db, app.Configuration, app.Logger);
 }
 
-app.UseHttpsRedirection();
+if (isDesktop)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    // Signal readiness only after seeding and binding the loopback listener succeeded.
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        var addresses = app.Services.GetRequiredService<IServer>()
+            .Features.Get<IServerAddressesFeature>()!.Addresses;
+        File.WriteAllText(Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_READY_FILE")!, addresses.Single());
+    });
+}
+else
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)
 app.UseAuthorization();  // 2. Are you ALLOWED? (checks [Authorize])
