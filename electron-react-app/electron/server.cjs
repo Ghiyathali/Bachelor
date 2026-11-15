@@ -4,31 +4,14 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 const { setTimeout: delay } = require('node:timers/promises')
 
-/** @param {import('electron').App} app @param {import('electron').Dialog} dialog */
-async function startServer(app, dialog) {
+/** @param {import('electron').App} app @param {NodeJS.ProcessEnv} overrides */
+async function startServer(app, overrides = {}) {
+  const environment = { ...process.env, ...overrides }
+  if (!environment.ConnectionStrings__Postgres?.trim() || Buffer.byteLength(environment.Jwt__Key ?? '') < 32) {
+    throw new Error('Launch configuration requires both ConnectionStrings__Postgres and Jwt__Key (at least 32 bytes).')
+  }
   const dataDirectory = app.getPath('userData')
   await fs.mkdir(dataDirectory, { recursive: true, mode: 0o700 })
-  const configPath = path.join(dataDirectory, 'server.json')
-  try {
-    await fs.access(configPath)
-  } catch {
-    const selection = await dialog.showOpenDialog({
-      title: 'Select your administrator-provided server configuration',
-      properties: ['openFile'],
-      filters: [{ name: 'Server configuration', extensions: ['json'] }],
-    })
-    if (selection.canceled) throw new Error('A server configuration is required. Reopen Pangaea and select your server.json file.')
-    const contents = await fs.readFile(selection.filePaths[0], 'utf8')
-    // Validate before saving; never echo configuration contents in an error dialog.
-    let config
-    try { config = JSON.parse(contents) } catch { throw new Error('The server configuration must be valid JSON.') }
-    if (!config?.ConnectionStrings?.Postgres || typeof config?.Jwt?.Key !== 'string' || Buffer.byteLength(config.Jwt.Key) < 32) {
-      throw new Error('The server configuration needs ConnectionStrings.Postgres and a Jwt.Key of at least 32 bytes.')
-    }
-    await fs.writeFile(configPath, contents, { mode: 0o600, flag: 'wx' })
-  }
-  await fs.chmod(configPath, 0o600)
-
   const portPath = path.join(dataDirectory, 'server-port')
   let port = 0
   try {
@@ -38,14 +21,14 @@ async function startServer(app, dialog) {
   const temporaryDirectory = await fs.mkdtemp(path.join(dataDirectory, 'server-start-'))
   const readyFile = path.join(temporaryDirectory, 'ready')
   const serverDirectory = path.join(process.resourcesPath, 'server')
-  const child = spawn(path.join(serverDirectory, 'rest-server'), [], {
+  const child = spawn(path.join(serverDirectory, process.platform === 'win32' ? 'rest-server.exe' : 'rest-server'), [], {
     cwd: serverDirectory,
     env: {
-      ...process.env,
+      ...environment,
       ASPNETCORE_ENVIRONMENT: 'Production',
       DOTNET_ENVIRONMENT: 'Production',
       ASPNETCORE_WEBROOT: path.join(process.resourcesPath, 'ui'),
-      PANGAEA_DESKTOP_CONFIG: configPath,
+      PANGAEA_DESKTOP_MODE: '1',
       PANGAEA_DESKTOP_READY_FILE: readyFile,
       PANGAEA_DESKTOP_PORT: String(port),
     },
@@ -57,7 +40,7 @@ async function startServer(app, dialog) {
   try {
     for (let attempt = 0; attempt < 600; attempt++) {
       if (failed || child.exitCode !== null || child.signalCode !== null) {
-        throw new Error(`The bundled server could not start. Check the database connection, applied migrations, and ${configPath}. If the saved port is occupied, close the other application and try again.`)
+        throw new Error('The bundled server could not start. Check the saved connection settings or launch environment variables, database access, and applied migrations. If the saved port is occupied, close the other application and try again.')
       }
       try {
         const origin = (await fs.readFile(readyFile, 'utf8')).trim()

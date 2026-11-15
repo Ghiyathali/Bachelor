@@ -1,9 +1,11 @@
 // @ts-check
 
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell, safeStorage } = require('electron')
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const { startServer } = require('./server.cjs')
+const { credentialStore } = require('./credentials.cjs')
+const { loadBundledCredentials, resolveCredentials } = require('./bootstrap.cjs')
 
 const isDevelopment = !app.isPackaged
 if (!isDevelopment) {
@@ -13,6 +15,53 @@ if (!isDevelopment) {
 /** @type {Awaited<ReturnType<typeof startServer>> | undefined} */
 let server
 let quitting = false
+let bootstrapping = true
+/** @type {import('electron').BrowserWindow | undefined} */
+let databaseWindow
+const store = credentialStore(app.getPath('userData'), safeStorage)
+const hasLaunchCredentials = () => process.env.ConnectionStrings__Postgres !== undefined || process.env.Jwt__Key !== undefined
+
+function openDatabaseWindow() {
+  if (databaseWindow) { databaseWindow.focus(); return }
+  databaseWindow = new BrowserWindow({
+    width: 680, height: 650, minWidth: 560, minHeight: 600,
+    title: 'Database connection', autoHideMenuBar: true,
+    webPreferences: { preload: path.join(__dirname, 'database-preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+  })
+  databaseWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  databaseWindow.webContents.on('will-navigate', event => event.preventDefault())
+  databaseWindow.on('closed', () => { databaseWindow = undefined })
+  void databaseWindow.loadFile(path.join(__dirname, 'database-settings.html'))
+}
+
+/** @param {import('electron').IpcMainInvokeEvent} event */
+function requireDatabaseWindow(event) {
+  if (!databaseWindow || event.sender !== databaseWindow.webContents || event.senderFrame !== event.sender.mainFrame) {
+    throw new Error('Database settings can only be changed from the connection dialog.')
+  }
+}
+ipcMain.handle('open-database-settings', event => {
+  if (isDevelopment || event.senderFrame !== event.sender.mainFrame ||
+      !server || new URL(event.sender.getURL()).origin !== server.origin) return
+  openDatabaseWindow()
+})
+ipcMain.handle('database-settings-state', async event => {
+  requireDatabaseWindow(event)
+  let saved = false
+  try { await fs.access(path.join(app.getPath('userData'), 'server-credentials.encrypted')); saved = true } catch { /* Not configured. */ }
+  return { saved, environmentOverride: hasLaunchCredentials() }
+})
+ipcMain.handle('database-settings-save', async (event, input) => {
+  requireDatabaseWindow(event)
+  if (hasLaunchCredentials()) return { error: 'This launch uses environment variables. Quit and launch normally to change saved settings.' }
+  try {
+    await store.save(input)
+  } catch {
+    return { error: 'Could not save securely. Check the connection string and unlock your Keychain, then try again.' }
+  }
+  setTimeout(() => { app.relaunch(); app.quit() }, 150)
+  return { saved: true }
+})
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -116,7 +165,32 @@ app.on('second-instance', () => {
 
 if (hasInstanceLock) app.whenReady().then(async () => {
   if (!isDevelopment) {
-    server = await startServer(app, dialog)
+    let credentials
+    try {
+      credentials = await resolveCredentials(store, process.env,
+        () => loadBundledCredentials(process.resourcesPath, app.getPath('userData')))
+    } catch (error) {
+      dialog.showErrorBox('Database settings unavailable', 'Could not load the database configuration. Use the connection dialog to enter replacement settings.')
+      openDatabaseWindow()
+      return
+    }
+    if (!hasLaunchCredentials() && !credentials) {
+      openDatabaseWindow()
+      return
+    }
+    try {
+      server = await startServer(app, credentials ?? {})
+    } catch {
+      const { response } = await dialog.showMessageBox({
+        type: 'error', title: 'Could not connect',
+        message: 'The local server could not start.',
+        detail: 'Check the database connection, firewall access, migrations, and whether the saved local port is available. You can edit the connection without signing in.',
+        buttons: ['Database connection', 'Quit'], defaultId: 0, cancelId: 1,
+      })
+      if (response === 0) openDatabaseWindow()
+      else app.quit()
+      return
+    }
     server.child.on('exit', () => {
       if (!quitting) {
         dialog.showErrorBox('Pangaea server stopped', 'The local server stopped unexpectedly. Reopen Pangaea to reconnect.')
@@ -125,12 +199,17 @@ if (hasInstanceLock) app.whenReady().then(async () => {
     })
   }
   createWindow()
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
 }).catch(error => {
   dialog.showErrorBox('Pangaea could not start', error.message)
   app.quit()
+}).finally(() => { bootstrapping = false })
+
+app.on('activate', () => {
+  if (bootstrapping) return
+  if (BrowserWindow.getAllWindows().length === 0) {
+    if (isDevelopment || server) createWindow()
+    else openDatabaseWindow()
+  }
 })
 
 app.on('before-quit', event => {

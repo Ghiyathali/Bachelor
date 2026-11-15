@@ -3,4 +3,7 @@ dist
 out
 release
 build/server
+build/bootstrap
+.env
+.env.*
 .DS_Store

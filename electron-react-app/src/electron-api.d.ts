@@ -4,8 +4,14 @@ export {}
 
 declare global {
   interface Window {
+    databaseSettings: {
+      state: () => Promise<{ saved: boolean; environmentOverride: boolean }>
+      save: (input: { postgres: string; pynSource?: string }) => Promise<{ saved?: boolean; error?: string }>
+    }
     electronAPI?: {
       platform: string
+      bundledServer: boolean
+      openDatabaseSettings: () => Promise<void>
       savePdf: () => Promise<{ saved: boolean; filePath?: string }>
       saveReport: (report: {
         format: 'svg' | 'pdf' | 'csv'

@@ -1,9 +1,0 @@
-{
-  "ConnectionStrings": {
-    "Postgres": "Host=<server>.postgres.database.azure.com;Port=5432;Database=<database>;Username=<restricted-app-user>;Password=<password>;SSL Mode=VerifyFull",
-    "PynSource": ""
-  },
-  "Jwt": {
-    "Key": "<replace-with-a-random-key-of-at-least-32-bytes>"
-  }
-}

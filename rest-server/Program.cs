@@ -13,8 +13,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 
 // Load env file
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-var desktopConfig = Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_CONFIG");
-var isDesktop = !string.IsNullOrEmpty(desktopConfig);
+var isDesktop = Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_MODE") == "1";
 if (!isDesktop && File.Exists(envFile))
 {
     DotNetEnv.Env.Load(envFile);
@@ -23,7 +22,6 @@ if (!isDesktop && File.Exists(envFile))
 var builder = WebApplication.CreateBuilder(args);
 if (isDesktop)
 {
-    builder.Configuration.AddJsonFile(desktopConfig!, optional: false, reloadOnChange: false);
     // Reuse the installation's port to preserve the renderer's localStorage origin.
     var port = int.Parse(Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_PORT") ?? "0");
     builder.WebHost.ConfigureKestrel(options => options.Listen(System.Net.IPAddress.Loopback, port));
@@ -35,7 +33,7 @@ builder.Services.AddOpenApi();
 // ---------- Database ----------
 var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException(
-        "PostgreSQL is not configured. Set ConnectionStrings:Postgres in desktop server.json or ConnectionStrings__Postgres in the server environment.");
+        "PostgreSQL is not configured. Use the desktop connection settings or set ConnectionStrings__Postgres in the server environment.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnectionString));
@@ -44,7 +42,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
 if (Encoding.UTF8.GetByteCount(jwtOptions.Key) < 32)
     throw new InvalidOperationException(
-        "JWT is not configured. Set Jwt:Key in desktop server.json or Jwt__Key in the server environment (at least 32 characters).");
+        "JWT is not configured. Use the desktop connection settings or set Jwt__Key in the server environment (at least 32 characters).");
 
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddSingleton<TokenService>();

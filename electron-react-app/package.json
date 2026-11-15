@@ -12,6 +12,7 @@
     "dev:electron": "wait-on tcp:5173 && electron .",
     "build": "vite build",
     "dist:mac": "node scripts/dist-mac.cjs",
+    "dist:win": "node scripts/dist-win.cjs",
     "test": "node --test tests/*.test.ts tests/*.test.cjs",
     "typecheck": "tsc --noEmit",
     "start": "electron .",
