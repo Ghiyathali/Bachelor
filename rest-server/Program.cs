@@ -146,6 +146,14 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+
+// `dotnet run --project rest-server -- create-admin`: create the first Admin, then stop (no web server).
+if (args.FirstOrDefault() == CreateAdminCommand.Name)
+{
+    using var commandScope = app.Services.CreateScope();
+    var commandDb = commandScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    return await CreateAdminCommand.RunAsync(commandDb, postgresConnectionString, Console.In, Console.Out, CreateAdminCommand.ReadHidden);
+}
 if (isDesktop)
 {
     // Electron owns the stdin pipe. EOF also stops the server if Electron crashes.
@@ -200,6 +208,7 @@ app.UseRateLimiter();    // 3. NEW: too many requests? (checks [EnableRateLimiti
 app.MapControllers();
 
 app.Run();
+return 0;
 
 // Makes the auto-generated Program class visible to rest-server.Tests (WebApplicationFactory<Program>).
 public partial class Program { }

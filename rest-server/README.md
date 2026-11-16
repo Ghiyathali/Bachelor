@@ -51,6 +51,26 @@ The frontend development pages themselves still use HTTP.
 To use the local Docker database instead, set `ConnectionStrings__Postgres` in
 `.env` to the local connection string shown in `.env.example`.
 
+## Create the first Admin (for example in production)
+
+Inside the app only an Admin can create accounts, so a new database needs its first
+Admin created once from the terminal. Point `.env` at that database, apply the
+migrations, and run:
+
+```bash
+dotnet run --project rest-server -- create-admin
+```
+
+The command shows which database it will write to, then asks for the username,
+email and password (the password is not shown while typing). It asks for a final
+`y` before creating anything. The rules are the same as in the app: username 3 to
+30 characters without `@` or spaces, a valid email, and a password of 8 to 72
+characters. If the username or email already exists, nothing is created.
+The password is only stored as a bcrypt hash, never in code or in the app.
+
+After logging in, the Admin can change their password under
+**Manage accounts → Edit**.
+
 ## Event feedback API
 
 Listing events and submitting feedback are public and anonymous. Feedback rows
