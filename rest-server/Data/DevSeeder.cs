@@ -14,8 +14,8 @@ public static class DevSeeder
         if (await db.Accounts.AnyAsync(a => a.Role.Name == "Admin"))
             return;
 
-        var username = config["SeedAdmin:Username"]?.Trim().ToLowerInvariant();
-        var email = config["SeedAdmin:Email"]?.Trim().ToLowerInvariant();
+        var username = config["SeedAdmin:Username"];
+        var email = config["SeedAdmin:Email"];
         var password = config["SeedAdmin:Password"];
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -24,23 +24,10 @@ public static class DevSeeder
             return;
         }
 
-        if (await db.Accounts.AnyAsync(a => a.Username.ToLower() == username || a.Email.ToLower() == email))
-        {
-            logger.LogWarning("Cannot create the first Admin: username or email {Username}/{Email} is already used.", username, email);
-            return;
-        }
-
-        var adminRole = await db.Roles.SingleAsync(r => r.Name == "Admin");
-
-        db.Accounts.Add(new Account
-        {
-            Username = username,
-            Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12),
-            RoleId = adminRole.Id,
-        });
-        await db.SaveChangesAsync();
-        logger.LogInformation("Created first Admin account {Username}", username);
+        // Same rules as the create-admin command and as creating an account in the app.
+        var result = await AdminAccounts.CreateAsync(db, username, email, password);
+        if (result.Created) logger.LogInformation("{Message}", result.Message);
+        else logger.LogWarning("Cannot create the first Admin: {Message}", result.Message);
     }
 
     public static async Task SeedDashboardDemoDataAsync(
