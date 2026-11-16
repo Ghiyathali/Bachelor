@@ -10,6 +10,10 @@ public class Account
 
     public bool IsActive { get; set; } = true;
 
+    // When the password was last changed. Logins (tokens) from before this moment stop working,
+    // so someone who knew the old password is logged out straight away.
+    public DateTimeOffset? PasswordChangedAt { get; set; }
+
     public int RoleId { get; set; }
 
     // Not "required": we create accounts by setting RoleId only.

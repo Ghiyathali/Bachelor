@@ -69,6 +69,15 @@ builder.Services
                     context.Fail("Account is inactive.");
                     return;
                 }
+                // A login from before the last password change is no longer valid.
+                // Tokens store their creation time in whole seconds, so compare in seconds.
+                if (account.PasswordChangedAt is { } changedAt &&
+                    context.SecurityToken is Microsoft.IdentityModel.JsonWebTokens.JsonWebToken token &&
+                    token.IssuedAt < changedAt.UtcDateTime.AddTicks(-(changedAt.UtcDateTime.Ticks % TimeSpan.TicksPerSecond)))
+                {
+                    context.Fail("Password was changed.");
+                    return;
+                }
                 // Never trust a role from a token issued before an administrator changed it.
                 var identity = (ClaimsIdentity)context.Principal!.Identity!;
                 foreach (var type in new[] { "role", "username", "email" })
