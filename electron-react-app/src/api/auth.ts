@@ -56,6 +56,20 @@ export async function updateAccount(id: number, body: UpdateAccount): Promise<Ac
   return (await api.put<Account>(`/api/admin/accounts/${id}`, body)).data
 }
 
+// Admin resets someone's password, or changes their own (then currentPassword is required).
+// For your own password the server sends a new token, because older logins stop working.
+export interface ChangePasswordResponse {
+  token: string | null
+  expiresAt: string | null
+}
+
+export async function changePassword(
+  id: number,
+  body: { newPassword: string; currentPassword?: string },
+): Promise<ChangePasswordResponse> {
+  return (await api.put<ChangePasswordResponse>(`/api/admin/accounts/${id}/password`, body)).data
+}
+
 export async function deleteAccount(id: number): Promise<void> {
   await api.delete(`/api/admin/accounts/${id}`)
 }

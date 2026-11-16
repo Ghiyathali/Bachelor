@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { deleteAccount, listAccounts, updateAccount, type Account } from '../api/auth'
+import { changePassword, deleteAccount, listAccounts, updateAccount, type Account } from '../api/auth'
 import { getErrorMessage } from '../api/client'
 import { ROLES } from '../auth/permissions'
+import { MAX_PASSWORD, MIN_PASSWORD, passwordProblem, wantsPasswordChange } from '../auth/passwordRules'
 import { refreshSession } from '../auth/session'
 import { useAuthStore } from '../stores/authStore'
 
 function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
   account: Account
   onClose: () => void
-  onSaved: (account: Account) => void
+  onSaved: (account: Account, passwordChanged: boolean) => void
   onDeleted: () => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -22,14 +23,36 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
   const [role, setRole] = useState(account.role)
   const [isActive, setIsActive] = useState(account.isActive)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [triedSave, setTriedSave] = useState(false)
   const currentUsername = useAuthStore(state => state.user?.username)
   const self = currentUsername === account.username
   const changed = username !== account.username || email !== account.email || role !== account.role || isActive !== account.isActive
+  const passwordFields = { newPassword, confirm: confirmPassword, current: currentPassword, self }
+  const passwordWanted = wantsPasswordChange(passwordFields)
+  const problem = passwordProblem(passwordFields)
+  // Only show a problem once something is typed in "Confirm", or Save was pressed.
+  const showProblem = problem !== null && (triedSave || confirmPassword !== '')
   const save = useMutation({
-    mutationFn: () => updateAccount(account.id, { username, email, role, isActive }),
+    mutationFn: async () => {
+      // Details first, while the current login is still valid: the password change ends older logins.
+      const result = changed ? await updateAccount(account.id, { username, email, role, isActive }) : account
+      if (passwordWanted) {
+        const { token, expiresAt } = await changePassword(account.id, {
+          newPassword,
+          currentPassword: self ? currentPassword : undefined,
+        })
+        // Your own password: stay logged in with the new token from the server.
+        const { user, setSession } = useAuthStore.getState()
+        if (self && token && expiresAt && user) setSession(token, expiresAt, { ...user, username: result.username, email: result.email })
+      }
+      return result
+    },
     onSuccess: async result => {
       if (self) await refreshSession()
-      onSaved(result)
+      onSaved(result, passwordWanted)
     },
   })
   const remove = useMutation({ mutationFn: () => deleteAccount(account.id), onSuccess: onDeleted })
@@ -60,7 +83,11 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
       <div hidden={confirmDelete}>
         <h2 id={confirmDelete ? undefined : 'account-dialog-title'} className="text-2xl font-bold">Edit account</h2>
         <p id={confirmDelete ? undefined : 'account-dialog-description'} className="mt-2 break-words text-sm text-muted">Update account details for {account.username}.</p>
-        <form onSubmit={event => { event.preventDefault(); save.mutate() }} className="mt-6 space-y-4">
+        <form onSubmit={event => {
+          event.preventDefault()
+          setTriedSave(true)
+          if (problem === null) save.mutate()
+        }} className="mt-6 space-y-4">
           <fieldset disabled={busy} className="space-y-4">
             <div>
               <label htmlFor="account-username" className="text-sm font-medium">Username</label>
@@ -77,13 +104,33 @@ function EditAccountDialog({ account, onClose, onSaved, onDeleted }: {
               </select>
             </div>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isActive} disabled={self} onChange={event => setIsActive(event.target.checked)} /> Active account</label>
+
+            <div className="space-y-4 border-t border-line pt-4">
+              <div>
+                <h3 className="text-base font-semibold">{self ? 'Change your password' : 'Reset password'}</h3>
+                <p className="mt-1 text-xs text-helper">Leave empty to keep the current password. {MIN_PASSWORD} to {MAX_PASSWORD} characters.</p>
+              </div>
+              {self && <div>
+                <label htmlFor="account-current-password" className="text-sm font-medium">Current password</label>
+                <input id="account-current-password" type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} autoComplete="current-password" className={inputClass} />
+              </div>}
+              <div>
+                <label htmlFor="account-new-password" className="text-sm font-medium">New password</label>
+                <input id="account-new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} maxLength={MAX_PASSWORD} autoComplete="new-password" className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="account-confirm-password" className="text-sm font-medium">Confirm new password</label>
+                <input id="account-confirm-password" type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} maxLength={MAX_PASSWORD} autoComplete="new-password" aria-invalid={showProblem} className={inputClass} />
+              </div>
+              {showProblem && <p role="alert" className="text-sm text-danger">{problem}</p>}
+            </div>
           </fieldset>
           {self && <p className="text-sm text-muted">Another administrator must change your role, deactivate or delete your account.</p>}
           {save.error && <p role="alert" className="text-sm text-danger">{getErrorMessage(save.error)}</p>}
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-5">
             <button ref={deleteButton} type="button" disabled={self || busy} onClick={() => { remove.reset(); setConfirmDelete(true) }} className="mr-auto rounded border border-danger-line px-3 py-2 text-sm text-danger hover:bg-danger-soft disabled:opacity-40">Delete account</button>
             <button type="button" disabled={busy} onClick={onClose} className="rounded border border-line-strong px-4 py-2 text-sm disabled:opacity-40">Cancel</button>
-            <button type="submit" disabled={busy || !changed} className="rounded bg-brand px-4 py-2 text-sm font-medium hover:bg-brand-dark disabled:opacity-40 text-white">{save.isPending ? 'Saving…' : 'Save'}</button>
+            <button type="submit" disabled={busy || (!changed && !passwordWanted)} className="rounded bg-brand px-4 py-2 text-sm font-medium hover:bg-brand-dark disabled:opacity-40 text-white">{save.isPending ? 'Saving…' : 'Save'}</button>
           </div>
         </form>
       </div>
@@ -130,7 +177,7 @@ export default function AccountsPage() {
           <td className="p-3"><button type="button" aria-label={`Edit ${account.username}`} onClick={() => { setNotice(null); setEditing(account) }} className="rounded border border-line-strong px-4 py-2 text-sm hover:bg-hover">Edit</button></td>
         </tr>)}</tbody>
       </table></div>}
-      {editing && <EditAccountDialog key={editing.id} account={editing} onClose={() => setEditing(null)} onSaved={account => finish(`Account ${account.username} saved.`)} onDeleted={() => finish(`Account ${editing.username} deleted.`)} />}
+      {editing && <EditAccountDialog key={editing.id} account={editing} onClose={() => setEditing(null)} onSaved={(account, passwordChanged) => finish(passwordChanged ? `Account ${account.username} saved. The password was changed.` : `Account ${account.username} saved.`)} onDeleted={() => finish(`Account ${editing.username} deleted.`)} />}
     </section>
   )
 }
