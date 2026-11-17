@@ -16,7 +16,7 @@ public record TrendsResponse(string Interval, IReadOnlyList<TrendPoint> Periods)
 
 [ApiController]
 [Route("api/dashboard/trends")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class TrendsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

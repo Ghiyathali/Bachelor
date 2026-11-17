@@ -12,8 +12,7 @@ test('walk-in input only accepts whole numbers from 0 to the maximum', () => {
   }
 })
 
-test('only Admin and Event Manager may enter walk-ins', () => {
-  assert.equal(hasRole('Admin', EVENT_MANAGEMENT_ROLES), true)
-  assert.equal(hasRole('Event Manager', EVENT_MANAGEMENT_ROLES), true)
-  for (const role of ['Marketing Manager', 'Standard User', undefined]) assert.equal(hasRole(role, EVENT_MANAGEMENT_ROLES), false)
+test('every role may enter walk-ins (FR-12 updated)', () => {
+  for (const role of ['Admin', 'Event Manager', 'Marketing Manager', 'Standard User']) assert.equal(hasRole(role, EVENT_MANAGEMENT_ROLES), true)
+  for (const role of [undefined, 'Unknown']) assert.equal(hasRole(role, EVENT_MANAGEMENT_ROLES), false)
 })

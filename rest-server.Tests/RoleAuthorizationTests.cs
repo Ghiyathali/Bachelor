@@ -22,26 +22,29 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         ("DELETE", "/api/admin/accounts/2147483647", RoleNames.Admin, null),
         ("PUT", "/api/admin/accounts/2147483647", RoleNames.Admin, new { role = RoleNames.StandardUser, isActive = false }),
         ("PUT", "/api/admin/accounts/2147483647/password", RoleNames.Admin, new { newPassword = "Password123" }),
-        ("GET", "/api/admin/pyn-sync/last", RoleNames.Admin, null),
+        ("GET", "/api/admin/pyn-sync/last", RoleNames.Managers, null),
         // Uses the disposable database as its mock PYN source.
-        ("POST", "/api/admin/pyn-sync", RoleNames.Admin, null),
-        ("GET", "/api/dashboard/overview", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/satisfaction", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/attendance", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/trends", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/event-types", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/returning", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/channels", RoleNames.Analytics, null),
-        ("GET", "/api/dashboard/estimate", RoleNames.Analytics, null),
-        ("GET", "/api/event-types", RoleNames.Analytics, null),
-        ("POST", "/api/event-types", RoleNames.EventManagement, new { name = "" }),
-        ("PUT", "/api/event-types/2147483647", RoleNames.EventManagement, new { name = "Test" }),
-        ("DELETE", "/api/event-types/2147483647", RoleNames.EventManagement, null),
-        ("POST", "/api/events", RoleNames.EventManagement, new { name = "" }),
-        ("PATCH", "/api/events/2147483647/feedback-status", RoleNames.EventManagement, new { isFeedbackOpen = true }),
-        ("PATCH", "/api/events/2147483647/event-type", RoleNames.EventManagement, new { eventTypeId = (int?)null }),
-        ("GET", "/api/events/walk-ins", RoleNames.EventManagement, null),
-        ("PATCH", "/api/events/2147483647/walk-ins", RoleNames.EventManagement, new { walkIns = 1 }),
+        ("POST", "/api/admin/pyn-sync", RoleNames.Managers, null),
+        ("GET", "/api/dashboard/overview", RoleNames.All, null),
+        ("GET", "/api/dashboard/satisfaction", RoleNames.All, null),
+        ("GET", "/api/dashboard/attendance", RoleNames.All, null),
+        ("GET", "/api/dashboard/trends", RoleNames.All, null),
+        ("GET", "/api/dashboard/event-types", RoleNames.All, null),
+        ("GET", "/api/dashboard/returning", RoleNames.All, null),
+        ("GET", "/api/dashboard/channels", RoleNames.All, null),
+        ("GET", "/api/dashboard/estimate", RoleNames.All, null),
+        ("GET", "/api/event-types", RoleNames.All, null),
+        ("POST", "/api/event-types", RoleNames.Managers, new { name = "" }),
+        ("PUT", "/api/event-types/2147483647", RoleNames.Managers, new { name = "Test" }),
+        ("DELETE", "/api/event-types/2147483647", RoleNames.Managers, null),
+        ("POST", "/api/events", RoleNames.Managers, new { name = "" }),
+        ("PATCH", "/api/events/2147483647/feedback-status", RoleNames.Managers, new { isFeedbackOpen = true }),
+        ("PATCH", "/api/events/2147483647/event-type", RoleNames.Managers, new { eventTypeId = (int?)null }),
+        ("GET", "/api/events/walk-ins", RoleNames.All, null),
+        ("PATCH", "/api/events/2147483647/walk-ins", RoleNames.All, new { walkIns = 1 }),
+        ("GET", "/api/admin/password-requests", RoleNames.Admin, null),
+        ("POST", "/api/admin/password-requests/2147483647/approve", RoleNames.Admin, null),
+        ("POST", "/api/admin/password-requests/2147483647/decline", RoleNames.Admin, null),
     ];
 
     public static IEnumerable<object[]> Matrix() => Roles.SelectMany(role => Endpoints.Select((_, index) => new object[] { role, index }));
@@ -66,7 +69,7 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         using (client)
         {
             var endpoint = Endpoints[index];
-            if (endpoint.Path == "/api/admin/pyn-sync" && role == RoleNames.Admin) await factory.CreatePynMockAsync();
+            if (endpoint.Path == "/api/admin/pyn-sync" && RoleNames.Managers.Split(',').Contains(role)) await factory.CreatePynMockAsync();
             using var request = new HttpRequestMessage(new HttpMethod(endpoint.Method), endpoint.Path);
             if (endpoint.Body is not null) request.Content = JsonContent.Create(endpoint.Body);
             using var response = await client.SendAsync(request);
@@ -140,7 +143,9 @@ public class RoleAuthorizationTests(ApiFactory factory) : IClassFixture<ApiFacto
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/dashboard/overview")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/admin/accounts/{account.Id}",
             new { role = RoleNames.StandardUser, isActive = true })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/dashboard/overview")).StatusCode);
+        // FR-12 (updated): a Standard User sees the dashboard, but not the list of accounts.
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/dashboard/overview")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/accounts")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/admin/accounts/{account.Id}",
             new { role = RoleNames.StandardUser, isActive = false })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);

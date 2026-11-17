@@ -64,7 +64,7 @@ public class EventsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = RoleNames.EventManagement)]
+    [Authorize(Roles = RoleNames.Managers)]
     public async Task<ActionResult<EventResponse>> Create(CreateEventRequest request)
     {
         var name = request.Name.Trim();
@@ -99,7 +99,7 @@ public class EventsController(AppDbContext db) : ControllerBase
     }
 
     [HttpPatch("{id:int}/feedback-status")]
-    [Authorize(Roles = RoleNames.EventManagement)]
+    [Authorize(Roles = RoleNames.Managers)]
     public async Task<ActionResult<EventResponse>> SetFeedbackStatus(
         int id,
         SetFeedbackStatusRequest request)
@@ -118,7 +118,7 @@ public class EventsController(AppDbContext db) : ControllerBase
 
     // #53: set or clear the type of an existing event.
     [HttpPatch("{id:int}/event-type")]
-    [Authorize(Roles = RoleNames.EventManagement)]
+    [Authorize(Roles = RoleNames.Managers)]
     public async Task<ActionResult<EventResponse>> SetEventType(
         int id,
         SetEventTypeRequest request)

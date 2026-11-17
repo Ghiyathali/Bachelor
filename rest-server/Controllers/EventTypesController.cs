@@ -18,10 +18,10 @@ public record SaveEventTypeRequest([Required, MaxLength(100)] string Name);
 // Analytics roles may read the list; only Admin and Event Manager may change it.
 [ApiController]
 [Route("api/event-types")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class EventTypesController(AppDbContext db) : ControllerBase
 {
-    private const string ManagerRoles = RoleNames.EventManagement;
+    private const string ManagerRoles = RoleNames.Managers;
 
     // GET /api/event-types
     [HttpGet]

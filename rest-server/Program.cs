@@ -136,6 +136,17 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0, // over the limit -> refuse immediately, don't wait
             }));
 
+    // "Forgot password?" is open without login, so it gets its own small limit per IP.
+    options.AddPolicy("password-reset", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = builder.Configuration.GetValue("PasswordResetRateLimit:PermitLimit", 10),
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+
     // Same { message } shape as our other errors, so the feedback form can show it.
     options.OnRejected = async (context, cancellationToken) =>
     {

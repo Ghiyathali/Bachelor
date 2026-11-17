@@ -56,6 +56,10 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__PynSource", ConnectionString);
         Environment.SetEnvironmentVariable("PynSync__ViewSchema", "pyn_mock_analytics");
 
+        // Every test request comes from the same "computer", so the "forgot password" limit
+        // (10 per minute per IP) would block the tests themselves.
+        Environment.SetEnvironmentVariable("PasswordResetRateLimit__PermitLimit", "1000");
+
         // Create the tables with the team's real EF Core migrations.
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(ConnectionString)

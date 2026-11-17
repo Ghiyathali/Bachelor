@@ -19,6 +19,7 @@ const paths = {
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
   refresh: <path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" />,
   megaphone: <path d="M3 10v4h3l7 4V6L6 10H3zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" />,
+  bell: <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0" />,
   alert: <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></>,
 }
 

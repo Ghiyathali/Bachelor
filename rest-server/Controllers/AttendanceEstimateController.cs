@@ -21,7 +21,7 @@ public record AttendanceEstimateResponse(
 
 [ApiController]
 [Route("api/dashboard/estimate")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class AttendanceEstimateController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

@@ -13,10 +13,10 @@ public record EventWalkIns(int EventId, string Name, DateTimeOffset StartsAt, in
 public record SetWalkInsRequest([Range(0, 10_000)] int WalkIns);
 
 // Walk-ins: staff enter how many people came without signing up, as one number per event.
-// Only Admin and Event Manager, the same roles that manage events.
+// Every role (FR-12 updated: the Standard User also has access to Events).
 [ApiController]
 [Route("api/events")]
-[Authorize(Roles = RoleNames.EventManagement)]
+[Authorize(Roles = RoleNames.All)]
 public class WalkInsController(AppDbContext db) : ControllerBase
 {
     // Every event with its walk-in number, newest first, for the Events page.

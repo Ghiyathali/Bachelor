@@ -19,7 +19,7 @@ public record PynSyncRunResponse(
 // #69: run the PYN sync now, and see the last run. Admin only.
 [ApiController]
 [Route("api/admin/pyn-sync")]
-[Authorize(Roles = RoleNames.Admin)]
+[Authorize(Roles = RoleNames.Managers)]
 public class PynSyncController(PynSyncService sync, AppDbContext db) : ControllerBase
 {
     // POST /api/admin/pyn-sync - "Sync now".

@@ -9,11 +9,12 @@ import {
 import { refreshSession } from './auth/session'
 import App from './App'
 import AccountsPage from './pages/AccountsPage'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, ACCOUNT_MANAGER_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, OWN_ACCOUNT_ONLY_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
 import DashboardPage from './pages/DashboardPage'
 import EventsPage from './pages/EventsPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import MyAccountPage from './pages/MyAccountPage'
 import QrCodePage from './pages/QrCodePage'
 import RegisterPage from './pages/RegisterPage'
 import SettingsPage from './pages/SettingsPage'
@@ -145,14 +146,23 @@ const registerRoute = createRoute({
   component: RegisterPage,
 })
 
+// FR-12 (updated): Admin and Managers see all accounts; only the Admin may create them (register).
 const accountsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'accounts',
-  beforeLoad: requireRole(ACCOUNT_ADMIN_ROLES),
+  beforeLoad: requireRole(ACCOUNT_MANAGER_ROLES),
   component: AccountsPage,
 })
 
-// Walk-ins: only Admin and Event Manager.
+// Standard User: edit only their own account.
+const myAccountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'account',
+  beforeLoad: requireRole(OWN_ACCOUNT_ONLY_ROLES),
+  component: MyAccountPage,
+})
+
+// Walk-ins: every role (FR-12 updated).
 const eventsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'events',
@@ -168,6 +178,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   accountsRoute,
+  myAccountRoute,
   eventsRoute,
 ])
 

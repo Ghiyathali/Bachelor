@@ -26,12 +26,21 @@ public record ChangePasswordRequest(
 // so you get a new one and stay logged in.
 public record ChangePasswordResponse(string? Token, DateTimeOffset? ExpiresAt);
 
+// FR-12 (updated) - who may do what with accounts:
+// - Admin: everything. The ONLY one who may see other accounts, edit them, create/delete them and change roles.
+// - Event Manager, Marketing Manager and Standard User: only their own account (username, email, password).
 [ApiController]
 [Route("api/admin/accounts")]
-[Authorize(Roles = RoleNames.Admin)]
+[Authorize(Roles = RoleNames.All)]
 public class AccountsController(AppDbContext db, TokenService tokens) : ControllerBase
 {
+    private bool IsAdmin => User.IsInRole(RoleNames.Admin);
+    private bool IsSelf(int id) => User.FindFirst("sub")?.Value == id.ToString();
+
+    private ObjectResult NotAllowed(string message) => StatusCode(StatusCodes.Status403Forbidden, new { message });
+
     [HttpGet]
+    [Authorize(Roles = RoleNames.Admin)]   // only an Admin may see other accounts
     public async Task<ActionResult<IEnumerable<AccountResponse>>> List() => Ok(await db.Accounts
         .AsNoTracking().OrderBy(a => a.Username)
         .Select(a => new AccountResponse(a.Id, a.Username, a.Email, a.Role.Name, a.IsActive))
@@ -40,14 +49,20 @@ public class AccountsController(AppDbContext db, TokenService tokens) : Controll
     [HttpPut("{id:int}")]
     public async Task<ActionResult<AccountResponse>> Update(int id, UpdateAccountRequest request)
     {
+        // Everyone except an Admin only ever gets an answer about their own account
+        // (so they can't even find out whether another account exists).
+        if (!IsAdmin && !IsSelf(id)) return NotAllowed("You can only edit your own account.");
         var account = await db.Accounts.Include(a => a.Role).SingleOrDefaultAsync(a => a.Id == id);
         if (account is null) return NotFound();
         var role = await db.Roles.SingleOrDefaultAsync(r => r.Name == request.Role);
         if (role is null) return BadRequest(new { message = "Unknown role." });
-        // An administrator cannot accidentally remove their own administrative access.
-        if (User.FindFirst("sub")?.Value == id.ToString() &&
-            (!request.IsActive || request.Role != RoleNames.Admin))
-            return Conflict(new { message = "Another administrator must change your administrative access." });
+        if (role.Id != account.RoleId && !IsAdmin)
+            return NotAllowed("Only an administrator can change roles.");
+        // Nobody can deactivate themselves, and an administrator cannot remove their own admin access.
+        if (IsSelf(id) && (!request.IsActive || (IsAdmin && request.Role != RoleNames.Admin)))
+            return Conflict(new { message = IsAdmin
+                ? "Another administrator must change your administrative access."
+                : "You cannot deactivate your own account." });
 
         var username = request.Username?.Trim().ToLowerInvariant() ?? account.Username;
         var email = request.Email?.Trim().ToLowerInvariant() ?? account.Email;
@@ -71,14 +86,15 @@ public class AccountsController(AppDbContext db, TokenService tokens) : Controll
         return Ok(new AccountResponse(account.Id, account.Username, account.Email, role.Name, account.IsActive));
     }
 
-    // Admin changes their own password, or resets the password of another account.
+    // Change your own password (current password needed), or reset another account's (Admin only).
     [HttpPut("{id:int}/password")]
     public async Task<ActionResult<ChangePasswordResponse>> ChangePassword(int id, ChangePasswordRequest request)
     {
+        if (!IsAdmin && !IsSelf(id)) return NotAllowed("You can only change your own password.");
         var account = await db.Accounts.Include(a => a.Role).SingleOrDefaultAsync(a => a.Id == id);
         if (account is null) return NotFound();
 
-        // 400, not 401: a wrong current password must not log the Admin out of the app.
+        // 400, not 401: a wrong current password must not log you out of the app.
         var self = User.FindFirst("sub")?.Value == id.ToString();
         if (self && (string.IsNullOrEmpty(request.CurrentPassword) ||
                      !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, account.PasswordHash)))
@@ -97,6 +113,7 @@ public class AccountsController(AppDbContext db, TokenService tokens) : Controll
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = RoleNames.Admin)]   // only an Admin may delete accounts
     public async Task<IActionResult> Delete(int id)
     {
         if (User.FindFirst("sub")?.Value == id.ToString())
