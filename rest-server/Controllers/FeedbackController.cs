@@ -9,6 +9,8 @@ using RestServer.Models;
 
 namespace RestServer.Controllers;
 
+// FR-01: what the feedback form sends. The three 1-5 ratings are required, the three comment
+// boxes are optional. No name, email or device id is ever part of the request (NFR-02).
 public record CreateFeedbackRequest(
     [Range(1, 5)] int Rating,
     [Range(1, 5)] int UsefulnessRating,
@@ -17,6 +19,8 @@ public record CreateFeedbackRequest(
     [MaxLength(2000)] string? WhatCouldBeImproved,
     [MaxLength(2000)] string? Comment);
 
+// Sent back after a successful submit; the feedback form uses it for the thank-you screen
+// and the reward points (FR-13).
 public record FeedbackResponse(
     int Id,
     int EventId,
@@ -29,6 +33,8 @@ public record FeedbackResponse(
     string? Comment,
     DateTimeOffset CreatedAt);
 
+// FR-01: the endpoint the feedback form posts to. Participants have no account, so it is
+// open without login ([AllowAnonymous]) and protected by a rate limit instead (#42).
 [ApiController]
 [Route("api/events/{eventId:int}/feedback")]
 public class FeedbackController(AppDbContext db) : ControllerBase
@@ -40,6 +46,7 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         int eventId,
         CreateFeedbackRequest request)
     {
+        // Only an existing event with feedback open can receive feedback.
         var eventItem = await db.Events.SingleOrDefaultAsync(item => item.Id == eventId);
         if (eventItem is null)
             return NotFound(new { message = "Event not found." });
@@ -47,6 +54,7 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         if (!eventItem.IsFeedbackOpen)
             return Conflict(new { message = "Feedback is not open for this event." });
 
+        // CreatedAt is set by the model. Nothing about the sender (IP, device) is stored.
         var feedback = new Feedback
         {
             EventId = eventId,
@@ -65,6 +73,7 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         return StatusCode(StatusCodes.Status201Created, response);
     }
 
+    // Copies the stored row into the response record, so the database model is never sent directly.
     private static FeedbackResponse ToResponse(Feedback feedback, string eventName) => new(
         feedback.Id,
         feedback.EventId,
@@ -77,6 +86,7 @@ public class FeedbackController(AppDbContext db) : ControllerBase
         feedback.Comment,
         feedback.CreatedAt);
 
+    // Empty or whitespace-only comments are stored as null, so "no comment" is always the same value.
     private static string? CleanComment(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

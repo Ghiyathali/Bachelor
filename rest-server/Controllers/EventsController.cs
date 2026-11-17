@@ -19,6 +19,7 @@ public record EventResponse(
     int? EventTypeId,
     string? EventTypeName);
 
+// Body for creating an event in the app. Feedback stays closed unless it is opened here or later.
 public record CreateEventRequest(
     [Required, MaxLength(200)] string Name,
     DateTimeOffset StartsAt,
@@ -27,15 +28,20 @@ public record CreateEventRequest(
     bool IsFeedbackOpen = false,
     int? EventTypeId = null);
 
+// Opens or closes the feedback form for one event: only open events appear in the form (FR-01).
 public record SetFeedbackStatusRequest(bool IsFeedbackOpen);
 
 // #53: null removes the type from the event.
 public record SetEventTypeRequest(int? EventTypeId);
 
+// Events: the public list for the feedback form, plus create and edit actions for
+// Admins and managers (RoleNames.Managers).
 [ApiController]
 [Route("api/events")]
 public class EventsController(AppDbContext db) : ControllerBase
 {
+    // Public, because the feedback form has no login. By default only events with open feedback
+    // are returned (the form's dropdown); staff screens pass feedbackOpenOnly=false.
     [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EventResponse>>> GetAll(
@@ -52,6 +58,7 @@ public class EventsController(AppDbContext db) : ControllerBase
             .ToListAsync());
     }
 
+    // Public: one event by id, or 404.
     [AllowAnonymous]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EventResponse>> GetById(int id)
@@ -63,6 +70,7 @@ public class EventsController(AppDbContext db) : ControllerBase
         return eventItem is null ? NotFound() : Ok(ToResponse(eventItem));
     }
 
+    // The name is trimmed. A blank name, an end before the start or an unknown type gives 400.
     [HttpPost]
     [Authorize(Roles = RoleNames.Managers)]
     public async Task<ActionResult<EventResponse>> Create(CreateEventRequest request)
@@ -98,6 +106,7 @@ public class EventsController(AppDbContext db) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, ToResponse(eventItem));
     }
 
+    // Open or close feedback for an existing event.
     [HttpPatch("{id:int}/feedback-status")]
     [Authorize(Roles = RoleNames.Managers)]
     public async Task<ActionResult<EventResponse>> SetFeedbackStatus(
@@ -142,6 +151,7 @@ public class EventsController(AppDbContext db) : ControllerBase
         return Ok(ToResponse(eventItem));
     }
 
+    // The type name is included, so the app doesn't need a second request to show it.
     private static EventResponse ToResponse(Event eventItem) => new(
         eventItem.Id,
         eventItem.Name,

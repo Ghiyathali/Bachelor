@@ -1,7 +1,7 @@
 using System.Text;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.RateLimiting;                 // NEW: FixedWindowRateLimiterOptions, RateLimitPartition
+using System.Threading.RateLimiting;                 // FixedWindowRateLimiterOptions, RateLimitPartition
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +11,8 @@ using RestServer.Sync;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 
-// Load env file
+// Settings: during development they come from rest-server/.env. Inside the desktop app
+// (PANGAEA_DESKTOP_MODE=1) Electron passes them in as environment variables instead.
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var isDesktop = Environment.GetEnvironmentVariable("PANGAEA_DESKTOP_MODE") == "1";
 if (!isDesktop && File.Exists(envFile))
@@ -223,7 +224,7 @@ else
 
 app.UseAuthentication(); // 1. WHO are you?   (reads + checks the token)
 app.UseAuthorization();  // 2. Are you ALLOWED? (checks [Authorize])
-app.UseRateLimiter();    // 3. NEW: too many requests? (checks [EnableRateLimiting])
+app.UseRateLimiter();    // 3. Too many requests? (checks [EnableRateLimiting])
 
 app.MapControllers();
 
