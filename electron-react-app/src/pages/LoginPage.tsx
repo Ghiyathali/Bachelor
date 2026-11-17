@@ -3,7 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { login } from '../api/auth'
+import { getSetupStatus } from '../api/setup'
+import FirstAdminSetup from '../components/FirstAdminSetup'
 import { getErrorMessage } from '../api/client'
 import ForgotPasswordForm from '../components/ForgotPasswordForm'
 import { useAuthStore } from '../stores/authStore'
@@ -21,6 +24,9 @@ export default function LoginPage() {
   const setSession = useAuthStore((state) => state.setSession)
   const [serverError, setServerError] = useState<string | null>(null)
   const [forgot, setForgot] = useState(false)
+  // First start on a new database: no Admin yet, so show "Set up Pangaea" instead of the login form.
+  // If the check fails (for example the server is down), the normal login form is shown.
+  const setup = useQuery({ queryKey: ['setup-status'], queryFn: getSetupStatus, retry: false })
 
   const {
     register,
@@ -44,6 +50,7 @@ export default function LoginPage() {
     }
   }
 
+  if (setup.data?.needsFirstAdmin) return <FirstAdminSetup onAdminExists={() => void setup.refetch()} />
   if (forgot) return <ForgotPasswordForm onBack={() => setForgot(false)} />
 
   return (

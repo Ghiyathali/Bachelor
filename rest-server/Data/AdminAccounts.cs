@@ -11,7 +11,7 @@ namespace RestServer.Data;
 // app (FR-14), so a first Admin is never weaker than any other account.
 public static partial class AdminAccounts
 {
-    public record Result(bool Created, string Message);
+    public record Result(bool Created, string Message, Account? Account = null);
 
     [GeneratedRegex(@"^[^@\s]+$")]
     private static partial Regex UsernamePattern();
@@ -37,14 +37,15 @@ public static partial class AdminAccounts
             return new(false, $"The email '{email}' is already registered. Nothing was created.");
 
         var adminRole = await db.Roles.SingleAsync(r => r.Name == RoleNames.Admin, cancellationToken);
-        db.Accounts.Add(new Account
+        var account = new Account
         {
             Username = username,
             Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12),
             RoleId = adminRole.Id,
-        });
+        };
+        db.Accounts.Add(account);
         await db.SaveChangesAsync(cancellationToken);
-        return new(true, $"Created Admin account '{username}' ({email}).");
+        return new(true, $"Created Admin account '{username}' ({email}).", account);
     }
 }

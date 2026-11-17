@@ -51,11 +51,26 @@ The frontend development pages themselves still use HTTP.
 To use the local Docker database instead, set `ConnectionStrings__Postgres` in
 `.env` to the local connection string shown in `.env.example`.
 
-## Create the first Admin (for example in production)
+## First start on a new database
 
-Inside the app only an Admin can create accounts, so a new database needs its first
-Admin created once from the terminal. Point `.env` at that database, apply the
-migrations, and run:
+Put the connection string of the new (empty) database in `.env` and start the app.
+Nothing else is needed:
+
+1. **The tables are created automatically** when the server starts. It only adds
+   tables and columns, never deletes data, and does nothing when everything is up
+   to date. Set `Database__AutoMigrate=false` to manage the tables yourself with
+   `dotnet tool run dotnet-ef database update` instead.
+2. **The login page shows "Set up Pangaea"** while the database has no Admin yet.
+   Enter a username, email and password (8 to 72 characters) to create the first
+   Admin; you are logged in straight away and can create the other accounts and
+   roles under **Manage accounts**.
+3. **From then on only the normal login is shown.** The server refuses any further
+   "first admin" request, so nobody can use it later to make themselves Admin.
+
+## Create an Admin from the terminal (optional)
+
+As an alternative to the setup page, an Admin can also be created from the
+terminal. Point `.env` at the database and run:
 
 ```bash
 dotnet run --project rest-server -- create-admin

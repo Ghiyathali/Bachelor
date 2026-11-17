@@ -158,6 +158,15 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// Create or update the tables automatically, so a new database (for example PYN's) works straight away.
+// Only adds tables/columns, never deletes data. Switch off with Database__AutoMigrate=false.
+if (app.Configuration.GetValue("Database:AutoMigrate", true))
+{
+    using var migrateScope = app.Services.CreateScope();
+    var migrateDb = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DatabaseMigrator.ApplyPendingAsync(migrateDb, app.Logger);
+}
+
 // `dotnet run --project rest-server -- create-admin`: create the first Admin, then stop (no web server).
 if (args.FirstOrDefault() == CreateAdminCommand.Name)
 {
@@ -176,7 +185,7 @@ if (isDesktop)
 }
 
 // #53: placeholder event types for a new, empty database (every environment).
-// Needs the AddEventTypes migration - run `dotnet tool run dotnet-ef database update` first.
+// The tables exist by now (automatic migrations above, unless switched off).
 using (var seedScope = app.Services.CreateScope())
 {
     var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
