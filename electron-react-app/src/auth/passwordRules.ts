@@ -25,3 +25,30 @@ export function passwordProblem(fields: PasswordFields): string | null {
   if (newPassword !== confirm) return 'The new passwords do not match.'
   return null
 }
+
+// Checks the "Create the first admin account" form before anything is sent.
+// Same rules as the server (FR-14), so the user sees mistakes straight away.
+export interface FirstAdminFields {
+  username: string
+  email: string
+  password: string
+  confirm: string
+}
+
+// One message per field that has a problem; empty object = everything is fine.
+export function firstAdminProblems({ username, email, password, confirm }: FirstAdminFields): Partial<Record<keyof FirstAdminFields, string>> {
+  const problems: Partial<Record<keyof FirstAdminFields, string>> = {}
+  const name = username.trim()
+  if (name.length < 3 || name.length > 30) problems.username = 'The username must be 3 to 30 characters.'
+  else if (/[@\s]/.test(name)) problems.username = "The username cannot contain '@' or spaces."
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) problems.email = 'Enter a valid email address.'
+  // An empty password counts as "too short" here (on the Edit page, empty means "keep the password").
+  const passwordIssue = password === '' && confirm === ''
+    ? `The password must be at least ${MIN_PASSWORD} characters.`
+    : passwordProblem({ newPassword: password, confirm, current: '', self: false })
+  if (passwordIssue) {
+    if (passwordIssue.includes('match')) problems.confirm = passwordIssue
+    else problems.password = passwordIssue.replace('The new password', 'The password')
+  }
+  return problems
+}
