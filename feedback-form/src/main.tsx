@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
 
+// Starts the feedback form. StrictMode runs extra checks during development only.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

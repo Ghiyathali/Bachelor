@@ -18,7 +18,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
   </div>
 }
 
-// FR-14: how many participants to expect at a planned event, from past events of the same type.
+// FR-17: how many participants to expect at a planned event, from past events of the same type.
 export default function AttendanceEstimateCard() {
   const [eventTypeId, setEventTypeId] = useState<number>()
   const [date, setDate] = useState('')

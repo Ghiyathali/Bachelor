@@ -1,5 +1,7 @@
 namespace RestServer.Models;
 
+// One anonymous feedback answer for an event (FR-01). It has no link to a person, account
+// or sign-up, so it can't be traced back to whoever sent it (NFR-02).
 public class Feedback
 {
     public int Id { get; set; }

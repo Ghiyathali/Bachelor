@@ -14,6 +14,8 @@ const countSeries = [
 ]
 const inputClass = 'mt-1 block rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink'
 
+// FR-08: compare event types - average satisfaction, participants and number of events per type,
+// as two bar charts and a sortable table. Types with too little data show no value (NFR-02).
 export default function EventTypeComparisonCard() {
   const [filters, setFilters] = useState<EventTypeFilters>({})
   const [sortKey, setSortKey] = useState<SortKey>('averageSatisfaction')

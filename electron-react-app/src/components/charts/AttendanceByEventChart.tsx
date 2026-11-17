@@ -1,6 +1,7 @@
 import type { AttendanceByEvent } from '../../api/dashboard'
 import ResponsiveBarChart from './ResponsiveBarChart'
 
+// "Sign-ups per event": signed up vs accepted (and walk-ins) per event, drawn with the shared ResponsiveBarChart.
 const series = [
   { key: 'signedUp', label: 'Signed up', color: 'var(--color-chart-primary)' },
   { key: 'accepted', label: 'Accepted', color: 'var(--color-chart-secondary)' },

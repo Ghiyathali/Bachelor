@@ -1,3 +1,5 @@
+// All calls from the feedback form to the REST API. VITE_API_URL is the API's address when the
+// form is hosted. In development it is empty, and Vite forwards /api to the local API (vite.config.ts).
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 export interface EventOption {
@@ -28,6 +30,8 @@ interface ApiErrorBody {
   title?: string
 }
 
+// An error that keeps the HTTP status, so the form can show the API's own message (for example
+// 409 "Feedback is not open for this event" or 429 "Too many submissions").
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -37,6 +41,8 @@ export class ApiError extends Error {
   }
 }
 
+// Shared fetch helper: sends the request and turns network failures and error answers into ApiError,
+// using the API's message, or the validation errors when the API rejected a field.
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
 
@@ -62,10 +68,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T
 }
 
+// Events with open feedback, for the dropdown.
 export function getEvents(): Promise<EventOption[]> {
   return request<EventOption[]>('/api/events?feedbackOpenOnly=true')
 }
 
+// Sends one anonymous answer. Empty comment boxes are sent as null, not as empty text.
 export function submitFeedback(
   eventId: number,
   rating: number,

@@ -1,3 +1,6 @@
+// Builds the installer for one platform: 1) optional database defaults, 2) the React app,
+// 3) the REST API published for that platform, 4) electron-builder. Run it through
+// npm run dist:win or npm run dist:mac (macOS installers can only be built on a Mac).
 const { spawnSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -16,6 +19,9 @@ function build(target, arch = process.arch) {
     if (result.status !== 0) process.exit(result.status || 1)
   }
 
+  // Database defaults: unless PANGAEA_BUNDLE_ENV=false, the connection strings from rest-server/.env
+  // are bundled, so the app works right after installing. Anyone with the installer can extract them,
+  // so build with PANGAEA_BUNDLE_ENV=false for an installer that asks for the connection on first start.
   const bootstrap = path.join(root, 'build', 'bootstrap')
   fs.rmSync(bootstrap, { recursive: true, force: true })
   fs.mkdirSync(bootstrap, { recursive: true, mode: 0o700 })
@@ -32,6 +38,7 @@ function build(target, arch = process.arch) {
   // Force relative API requests; no build-time remote API override in bundled mode.
   if (!process.env.npm_execpath) throw new Error('Invoke this build through npm run dist:mac or dist:win.')
   run(process.execPath, [process.env.npm_execpath, 'run', 'build'], { ...process.env, VITE_API_URL: '' })
+  // Publish the API as a self-contained program for the target platform (no .NET install needed).
   const server = path.join(root, 'build', 'server')
   fs.rmSync(server, { recursive: true, force: true })
   run('dotnet', ['publish', '../rest-server/rest-server.csproj', '-c', 'Release',

@@ -7,12 +7,17 @@ import pangaeaLogo from '../pangaea-logo.png'
 import NotificationBell from './components/NotificationBell'
 import SyncDatabaseButton from './components/SyncDatabaseButton'
 
+// The frame around every page: the sidebar with the logo, the navigation, the sync button and
+// log out, and the page itself (<Outlet />). FR-12: each link is only shown to the roles that
+// may use it - the backend checks the same roles again on every request.
 export default function App() {
   const navigate = useNavigate()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
 
+  // The menu (on small windows) closes after navigating, or when the window becomes wide enough
+  // for the sidebar to be visible anyway.
   useEffect(() => router.subscribe('onResolved', () => setMenuOpen(false)), [router])
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1024px)')
@@ -26,6 +31,8 @@ export default function App() {
   const logout = useAuthStore(state => state.logout)
 
   useEffect(() => {
+    // While logged in, re-check the account every 15 seconds and when the window gets focus, so a
+    // changed role or a deactivated account takes effect without logging in again.
     if (!token) return
     const refresh = () => { void refreshSession().catch(() => {}) }
     const timer = window.setInterval(refresh, 15000)
@@ -33,6 +40,7 @@ export default function App() {
     return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
   }, [token])
 
+  // A new role re-runs the page guards, so a page the role may no longer see is left straight away.
   useEffect(() => { void router.invalidate() }, [user?.role, router])
 
   async function handleLogout() {

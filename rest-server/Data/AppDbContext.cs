@@ -4,6 +4,9 @@ using RestServer.Auth;
 
 namespace RestServer.Data;
 
+// The EF Core database context: one DbSet per table. OnModelCreating adds the rules the model
+// classes alone can't express (unique names, maximum lengths, check constraints, what happens
+// on delete). They are turned into the migrations in rest-server/Migrations.
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Account> Accounts => Set<Account>();
@@ -26,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(r => r.Account).WithMany().HasForeignKey(r => r.AccountId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        // The four roles are seed data with fixed ids, so every new database starts with them (FR-12).
         modelBuilder.Entity<Role>(entity =>
         {
             entity.Property(role => role.Name).HasMaxLength(100);
@@ -37,6 +41,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new Role { Id = 4, Name = RoleNames.StandardUser });
         });
 
+        // Usernames and emails are unique. A role can't be deleted while accounts still use it.
         modelBuilder.Entity<Account>(entity =>
         {
             entity.Property(account => account.IsActive).HasDefaultValue(true);
@@ -63,6 +68,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(eventItem => eventItem.Name).HasMaxLength(200);
             entity.Property(eventItem => eventItem.Location).HasMaxLength(300);
+            // Walk-ins (people who came without signing up) can never be negative.
             entity.ToTable(table => table.HasCheckConstraint("CK_Events_WalkIns", "\"WalkIns\" >= 0"));
 
             // #69: one PYN event = at most one row here (empty for events made in our app).
@@ -75,6 +81,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        // The database checks the 1-5 ratings too, not only the API. Deleting an event deletes its feedback.
         modelBuilder.Entity<Feedback>(entity =>
         {
             entity.ToTable(table =>
@@ -93,6 +100,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Status and age band are stored as numbers (the enum values); the check constraints keep them in range.
         modelBuilder.Entity<EventRegistration>(entity =>
         {
             entity.ToTable(table =>

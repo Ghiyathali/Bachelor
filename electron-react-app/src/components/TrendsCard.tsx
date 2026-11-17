@@ -6,6 +6,8 @@ import { getErrorMessage } from '../api/client'
 import { combineWithBar, useDashboardFilterStore } from '../stores/dashboardFilterStore'
 import TrendsChart from './charts/TrendsChart'
 
+// FR-07: the "Trends over time" card - choose month or season (and an event or dates), then
+// TrendsChart draws satisfaction and participants per period.
 export default function TrendsCard() {
   const [filters, setFilters] = useState<TrendFilters>({ interval: 'month' })
   const invalidRange = !!(filters.from && filters.to && filters.from > filters.to)

@@ -148,7 +148,7 @@ export default function DashboardPage() {
         <PromotionChannelsCard />
       </div>
 
-      {/* FR-14: planning help for a future event */}
+      {/* FR-17: planning help for a future event */}
       <div className="mt-8">
         <AttendanceEstimateCard />
       </div>

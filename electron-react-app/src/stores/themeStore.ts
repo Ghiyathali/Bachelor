@@ -1,3 +1,5 @@
+// Light or dark mode (Settings page). The choice is saved in localStorage on this computer and
+// applied through the data-theme attribute on <html>, which switches the colour variables in index.css.
 import { create } from 'zustand'
 
 type Theme = 'light' | 'dark'
