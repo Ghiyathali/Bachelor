@@ -1,5 +1,8 @@
 // @ts-check
 
+// Electron main process: starts the bundled API (server.cjs), opens the app window and handles
+// what a web page may not do itself (saving files, the database settings window).
+// In development (npm run dev) it loads the Vite dev server instead and starts no API.
 const { app, BrowserWindow, dialog, ipcMain, shell, safeStorage } = require('electron')
 const fs = require('node:fs/promises')
 const path = require('node:path')
@@ -8,6 +11,7 @@ const { credentialStore } = require('./credentials.cjs')
 const { loadBundledCredentials, resolveCredentials } = require('./bootstrap.cjs')
 
 const isDevelopment = !app.isPackaged
+// Installed app: keep its data (saved settings, API port) in a fixed "Pangaea" folder.
 if (!isDevelopment) {
   app.setName('Pangaea')
   app.setPath('userData', path.join(app.getPath('appData'), 'Pangaea'))
@@ -18,9 +22,12 @@ let quitting = false
 let bootstrapping = true
 /** @type {import('electron').BrowserWindow | undefined} */
 let databaseWindow
+// Database settings come from environment variables when they are set at launch,
+// otherwise from the encrypted store (credentials.cjs).
 const store = credentialStore(app.getPath('userData'), safeStorage)
 const hasLaunchCredentials = () => process.env.ConnectionStrings__Postgres !== undefined || process.env.Jwt__Key !== undefined
 
+// The "Database connection" window. It is sandboxed and can't open links or navigate away.
 function openDatabaseWindow() {
   if (databaseWindow) { databaseWindow.focus(); return }
   databaseWindow = new BrowserWindow({
@@ -34,12 +41,15 @@ function openDatabaseWindow() {
   void databaseWindow.loadFile(path.join(__dirname, 'database-settings.html'))
 }
 
+// Settings may only be read or saved from that window, never from the main app window.
 /** @param {import('electron').IpcMainInvokeEvent} event */
 function requireDatabaseWindow(event) {
   if (!databaseWindow || event.sender !== databaseWindow.webContents || event.senderFrame !== event.sender.mainFrame) {
     throw new Error('Database settings can only be changed from the connection dialog.')
   }
 }
+// IPC handlers = the messages a window may send to this process. The main window may only ask
+// to OPEN the settings window; reading and saving happen inside that window.
 ipcMain.handle('open-database-settings', event => {
   if (isDevelopment || event.senderFrame !== event.sender.mainFrame ||
       !server || new URL(event.sender.getURL()).origin !== server.origin) return
@@ -59,10 +69,13 @@ ipcMain.handle('database-settings-save', async (event, input) => {
   } catch {
     return { error: 'Could not save securely. Check the connection string and unlock your Keychain, then try again.' }
   }
+  // Restart, so the API starts again with the new settings.
   setTimeout(() => { app.relaunch(); app.quit() }, 150)
   return { saved: true }
 })
 
+// The main app window. It may only show pages from the local API (or the Vite dev server),
+// so a link can never load a foreign website inside the app.
 function createWindow() {
   const window = new BrowserWindow({
     width: 1000,
@@ -212,6 +225,7 @@ app.on('activate', () => {
   }
 })
 
+// On quit, stop the API cleanly first (close its input + SIGTERM), and force it after 5 seconds.
 app.on('before-quit', event => {
   if (quitting) return
   quitting = true

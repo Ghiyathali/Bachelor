@@ -1,4 +1,7 @@
 // @ts-check
+// Stores the database settings on this computer, encrypted by the operating system's secure
+// storage (Windows: DPAPI, macOS: Keychain) through Electron's safeStorage. The app window
+// never sees them.
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const { randomBytes } = require('node:crypto')
@@ -6,6 +9,7 @@ const { randomBytes } = require('node:crypto')
 /** @param {string} directory @param {import('electron').SafeStorage} storage */
 function credentialStore(directory, storage) {
   const file = path.join(directory, 'server-credentials.encrypted')
+  // Returns the saved settings, or null when nothing has been saved yet (first launch).
   async function load() {
     let encrypted
     try { encrypted = await fs.readFile(file) } catch (error) {
@@ -19,6 +23,9 @@ function credentialStore(directory, storage) {
       throw new Error('Could not unlock database settings. Open Database connection to enter them again.')
     }
   }
+  // Checks and encrypts the settings, writes them to a temporary file and then renames it, so a
+  // crash halfway can never leave a broken settings file. The JWT signing key is created here
+  // and kept when the same database is saved again.
   /** @param {{ postgres: string, pynSource?: string }} input */
   async function save(input) {
     if (typeof input?.postgres !== 'string' || !input.postgres.trim() || input.postgres.length > 16384 ||
