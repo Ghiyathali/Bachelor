@@ -1,6 +1,8 @@
 import { useThemeStore } from '../stores/themeStore'
 import { useDashboardPreferencesStore, type DefaultDateRange } from '../stores/dashboardPreferencesStore'
 
+// Settings: dark mode for everyone, and in the installed app (bundled API) a button that opens
+// the "Database connection" window, where the database settings are entered.
 export default function SettingsPage() {
   const theme = useThemeStore(state => state.theme)
   const setTheme = useThemeStore(state => state.setTheme)

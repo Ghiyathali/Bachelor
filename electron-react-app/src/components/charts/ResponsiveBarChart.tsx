@@ -3,6 +3,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FocusEvent, PointerEvent } from 'react'
 import { useElementSize } from '../../hooks/useElementSize'
 
+// The shared D3 bar chart used by every bar chart in the app. One group of bars per datum (for
+// example an event), one bar per series (for example signed up / accepted). It fits the width
+// of its container, and every bar can be reached with the keyboard and has a tooltip.
 export interface BarSeries {
   key: string
   label: string
@@ -32,6 +35,7 @@ interface TooltipState {
   text: string
 }
 
+// Fixed height; the width follows the container (useElementSize). The margins leave room for the axes.
 const height = 360
 const margin = { top: 18, right: 18, bottom: 76, left: 62 }
 
@@ -54,6 +58,8 @@ export default function ResponsiveBarChart({
   const innerWidth = Math.max(1, chartWidth - margin.left - margin.right)
   const innerHeight = height - margin.top - margin.bottom
 
+  // D3 scales turn data into pixels: x places each group, xSeries places the bars inside a group,
+  // y turns a value into a height. yMax fixes the top of the axis (for example 5 for ratings, 100 for %).
   const x = useMemo(
     () => scaleBand<string>().domain(data.map((item) => item.key)).range([0, innerWidth]).padding(0.22),
     [data, innerWidth],
@@ -69,6 +75,7 @@ export default function ResponsiveBarChart({
   )
 
   useEffect(() => {
+    // D3 draws the axes into the <g> elements React created. Long labels are rotated when the bars get narrow.
     if (!xAxisRef.current) return
 
     const labels = new Map(data.map((item) => [item.key, item.label]))
@@ -94,6 +101,7 @@ export default function ResponsiveBarChart({
     axis.selectAll('text').attr('fill', 'var(--color-body)').attr('font-size', 11)
   }, [y, width])
 
+  // Places the tooltip above the bar, kept inside the chart so it is never cut off at the edges.
   function showTooltip(
     event: PointerEvent<SVGRectElement> | FocusEvent<SVGRectElement>,
     datum: BarChartDatum,

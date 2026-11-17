@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+// Measures the width of an element and updates it whenever the element is resized. The D3 charts
+// use it to redraw at the right size, because an SVG needs its width in numbers, not in CSS.
 export function useElementSize<T extends HTMLElement>() {
   const ref = useRef<T>(null)
   const [width, setWidth] = useState(0)

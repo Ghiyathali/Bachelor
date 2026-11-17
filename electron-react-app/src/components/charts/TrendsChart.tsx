@@ -3,6 +3,10 @@ import { useEffect, useId, useMemo, useRef } from 'react'
 import type { TrendPoint, Trends } from '../../api/dashboard'
 import { useElementSize } from '../../hooks/useElementSize'
 
+// FR-07: line chart of satisfaction and participants per month or season, with two y-axes:
+// satisfaction (1-5) on the left and participants on the right.
+
+// The x-axis label for a period. Seasons start in Dec, Mar, Jun and Sep; winter spans two years.
 export function periodLabel(date: Date, interval: Trends['interval']) {
   if (interval === 'month') return utcFormat('%b %Y')(date)
   const month = date.getUTCMonth()
@@ -31,6 +35,7 @@ export default function TrendsChart({ data }: { data: Trends }) {
       utcMonth.offset(last ?? new Date(), 1),
     ]).range([margin.left, chartWidth - margin.right])
   }, [points, chartWidth])
+  // Two y-scales: satisfaction is always 1-5, participants go from 0 to the highest value.
   const satisfaction = useMemo(() => scaleLinear().domain([1, 5]).range([bottom, margin.top]), [bottom])
   const participants = useMemo(() => scaleLinear().domain([0, Math.max(1, max(points, p => p.participants ?? 0) ?? 0)])
     .nice().range([bottom, margin.top]), [points, bottom])
@@ -50,6 +55,8 @@ export default function TrendsChart({ data }: { data: Trends }) {
   }, [x, satisfaction, participants, points, innerWidth, data.interval])
 
   type Point = TrendPoint & { date: Date }
+  // defined() leaves a gap in the line where a value is hidden (fewer than 5 people, NFR-02),
+  // instead of drawing it as 0. describe() is the text for screen readers and tooltips.
   const satisfactionLine = line<Point>().defined(p => p.averageSatisfaction !== null)
     .x(p => x(p.date)).y(p => satisfaction(p.averageSatisfaction!))
   const participantLine = line<Point>().defined(p => p.participants !== null)

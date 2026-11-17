@@ -11,8 +11,11 @@ import './index.css'
 import { initializeTheme } from './stores/themeStore'
 import { useAuthStore } from './stores/authStore'
 
+// Apply the saved light/dark theme before the first render, so the screen doesn't flash.
 initializeTheme()
 
+// One shared TanStack Query cache for all server data. When someone logs in, logs out or gets
+// a new role, the cache is emptied, so nobody ever sees data loaded for the previous user.
 const queryClient = new QueryClient()
 useAuthStore.subscribe((state, previous) => {
   if (state.token !== previous.token || state.user?.role !== previous.user?.role) {
@@ -20,6 +23,7 @@ useAuthStore.subscribe((state, previous) => {
   }
 })
 
+// Start React: the query cache and the router (pages, login guards: see router.tsx).
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
