@@ -1,3 +1,6 @@
+// The public feedback form (FR-01) that participants open on their phone from the QR code.
+// No login: it loads the events with open feedback, asks three 1-5 ratings and three optional
+// comments, and sends them anonymously to the REST API. Afterwards the reward is shown (FR-13).
 import { FormEvent, useEffect, useState } from 'react'
 import {
   EventOption,
@@ -7,6 +10,7 @@ import {
 } from './api'
 import { Reward } from './Reward'
 
+// Event dates in the dropdown, for example "Sat, 14 Nov 2026".
 function formatEventDate(value: string) {
   return new Intl.DateTimeFormat('en', {
     weekday: 'short',
@@ -16,6 +20,7 @@ function formatEventDate(value: string) {
   }).format(new Date(value))
 }
 
+// Page layout: header, the form and a short footer.
 function App() {
   return (
     <div className="min-h-screen bg-[#f6f4ee] text-[#18322d]">
@@ -30,6 +35,7 @@ function App() {
   )
 }
 
+// Top bar with the "Anonymous" badge, so participants see straight away that no name is asked.
 function Header() {
   return (
     <header className="border-b border-black/5 bg-white/80 backdrop-blur">
@@ -51,6 +57,8 @@ function Header() {
   )
 }
 
+// The form itself. Each answer is its own piece of state. The three ratings start as null
+// ("not answered yet"), so the submit button stays disabled until all three are chosen.
 function FeedbackForm() {
   const [events, setEvents] = useState<EventOption[]>([])
   const [eventId, setEventId] = useState('')
@@ -65,6 +73,8 @@ function FeedbackForm() {
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState<FeedbackResponse | null>(null)
 
+  // Load the events with open feedback once, when the page opens. "cancelled" stops a late answer
+  // from updating the page after it was closed.
   useEffect(() => {
     let cancelled = false
 
@@ -89,6 +99,8 @@ function FeedbackForm() {
     }
   }, [])
 
+  // Sends the answers. The required fields are checked here and again by the API; on success the
+  // form is replaced by the thank-you card.
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (
@@ -244,6 +256,7 @@ function FeedbackForm() {
 
       {error && <ErrorMessage message={error} />}
 
+      {/* NFR-02: the privacy notice is shown before anything is sent. */}
       <section
         aria-labelledby="privacy-notice-title"
         className="rounded-2xl border border-[#deddd6] bg-[#eef4f1] px-6 py-5 text-sm leading-6 text-[#3f514b] sm:px-8"
@@ -282,6 +295,7 @@ function FeedbackForm() {
   )
 }
 
+// One white card per question, with a "*" when the question is required.
 function QuestionCard({
   title,
   required = false,
@@ -301,6 +315,8 @@ function QuestionCard({
   )
 }
 
+// The 1-5 scale as radio buttons, so it also works with the keyboard and screen readers.
+// lowLabel and highLabel explain the two ends, for example "Not useful" and "Very useful".
 function RatingScale({
   name,
   label,
@@ -344,6 +360,7 @@ function RatingScale({
   )
 }
 
+// An optional comment box. 2000 characters is the same limit as in the API and the database.
 function LongAnswer({
   id,
   value,
@@ -371,6 +388,7 @@ function LongAnswer({
   )
 }
 
+// Shown after submitting: a thank-you message and the reward points (Reward.tsx, FR-13).
 function SuccessCard({ feedback }: { feedback: FeedbackResponse }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-[#deddd6] bg-white shadow-[0_12px_40px_rgba(34,63,55,0.08)]">
@@ -396,6 +414,7 @@ function SuccessCard({ feedback }: { feedback: FeedbackResponse }) {
   )
 }
 
+// Error box, for example when the server can't be reached or too many answers were sent (429).
 function ErrorMessage({ message }: { message: string }) {
   return (
     <div role="alert" className="rounded-xl border border-[#efc7b7] bg-[#fff4ef] px-4 py-3 text-sm text-[#9b4727]">
