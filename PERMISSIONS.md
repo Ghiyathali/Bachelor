@@ -7,14 +7,35 @@ Role names are exact, case-sensitive values: `Admin`, `Event Manager`,
 | Feature | Admin | Event Manager | Marketing Manager | Standard User |
 | --- | --- | --- | --- | --- |
 | Home, settings, own account (`GET /api/auth/me`) | Yes | Yes | Yes | Yes |
-| Dashboard overview, satisfaction, attendance, trends, event-type comparison | Yes | Yes | Yes | No |
-| Read event types | Yes | Yes | Yes | No |
-| Create events, set event type, open/close feedback | Yes | Yes | No | No |
-| Add, rename, delete event types | Yes | Yes | No | No |
-| Generate/print feedback QR code | Yes | Yes | No | No |
-| List/create/edit/delete accounts, assign roles, deactivate/reactivate accounts | Yes | No | No | No |
-| Run PYN sync, read last sync | Yes | No | No | No |
+| Dashboard overview, satisfaction, attendance, trends, event-type comparison, returning, channels, estimate | Yes | Yes | Yes | Yes |
+| Export the impact report (SVG/PDF/CSV, generated in the desktop app) | Yes | Yes | Yes | No |
+| Read event types | Yes | Yes | Yes | Yes |
+| Create events, set event type, open/close feedback | Yes | Yes | Yes | No |
+| Add, rename, delete event types | Yes | Yes | Yes | No |
+| Events page: read and enter walk-ins | Yes | Yes | Yes | Yes |
+| Generate/print feedback QR code | Yes | Yes | Yes | Yes |
+| Run PYN sync, read last sync | Yes | Yes | Yes | No |
+| Manage accounts: list, edit, activate/deactivate, reset passwords of other accounts | Yes | No | No | No |
+| Edit own username/email/password ("My account" for every non-Admin role) | Yes | Yes | Yes | Yes |
+| Create and delete accounts | Yes | No | No | No |
+| Change roles | Yes | No | No | No |
+| See and approve/decline "forgot password" requests (notification bell) | Yes | No | No | No |
+| Request a new password ("Forgot password?" on the login page, no login) | Yes | Yes | Yes | Yes |
 | Public event catalogue, feedback submission, community feedback total | Yes | Yes | Yes | Yes |
+
+Only an Admin may see or edit other accounts, create/delete accounts and change roles.
+Event Managers, Marketing Managers and Standard Users get 403 for every account except
+their own, without a hint whether another account exists. So nobody but an Admin can
+reset an Admin's password and log in as them.
+
+**Forgot password.** `POST /api/auth/forgot-password` (`{ identifier, newPassword }`)
+stores the new password as a bcrypt hash in a pending request and always answers
+202 with the same message, so it cannot reveal which accounts exist. Nothing changes
+until an Admin approves it (`POST /api/admin/password-requests/{id}/approve`); the
+old password keeps working until then. Declining deletes the request. One pending
+request per account (a new one replaces it), requests expire after 24 hours, and the
+endpoint is rate limited per IP (`PasswordResetRateLimit__PermitLimit`, default 10 per minute).
+Approving ends existing sessions of that account, like any password change.
 
 The last row and login are explicitly anonymous: the standalone participant
 feedback form needs them without a staff account. Event catalogue means
@@ -60,19 +81,22 @@ dotnet ef database update --project rest-server
 
 ## UI behavior
 
-Navigation, home shortcuts and route guards share the same role lists.
-Only administrators see account controls. Marketing Managers see analytics,
-while Standard Users see home and settings. Permissions refresh from `/api/auth/me`
+Navigation, home shortcuts and route guards share the same role lists
+(`electron-react-app/src/auth/permissions.ts`). Only Admins see Manage accounts and the
+notification bell (top right) with pending password requests. Every other role sees
+"My account" to change their own username, email and password. Permissions refresh from `/api/auth/me`
 on protected navigation, window focus and every 15 seconds while signed in.
 Session/role changes clear cached query data. The backend remains authoritative
 between refreshes and when callers bypass the UI.
 
-Event and type mutations and PYN sync currently have API endpoints but no desktop
-screens; their authorization is enforced by the backend matrix above.
+Event and type mutations currently have API endpoints but no desktop screens;
+their authorization is enforced by the backend matrix above.
 
 ## Verification
 
-`RoleAuthorizationTests` exercise every protected endpoint for all four roles,
+`RoleAuthorizationTests` exercise every protected endpoint for all four roles
+(`AccountPermissionTests` and `PasswordRequestTests` cover the per-account rules and
+forgot-password requests),
 assert exact 403 responses for forbidden calls, check anonymous 401 responses,
 and cover account management and existing-token deactivation/demotion. A
 reflection test requires explicit access metadata on every controller action.

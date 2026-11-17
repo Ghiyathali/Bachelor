@@ -161,13 +161,13 @@ public class ChangePasswordTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task OnlyAnAdmin_CanChangePasswords()
+    public async Task StandardUser_CannotChangeSomeoneElsesPassword()
     {
         var (targetId, targetName) = await CreateAccount(RoleNames.StandardUser);
-        var (_, managerName) = await CreateAccount(RoleNames.EventManager);
-        using var manager = await factory.CreateLoggedInClientAsync(managerName, OldPassword);
+        var (_, userName) = await CreateAccount(RoleNames.StandardUser);
+        using var user = await factory.CreateLoggedInClientAsync(userName, OldPassword);
 
-        var response = await manager.PutAsJsonAsync($"/api/admin/accounts/{targetId}/password", new { newPassword = NewPassword });
+        var response = await user.PutAsJsonAsync($"/api/admin/accounts/{targetId}/password", new { newPassword = NewPassword });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, await LoginStatus(targetName, OldPassword));

@@ -7,6 +7,7 @@ namespace RestServer.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<PasswordResetRequest> PasswordResetRequests => Set<PasswordResetRequest>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventType> EventTypes => Set<EventType>();
@@ -17,6 +18,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // One open password request per account; it disappears with the account.
+        modelBuilder.Entity<PasswordResetRequest>(entity =>
+        {
+            entity.HasIndex(r => r.AccountId).IsUnique();
+            entity.HasOne(r => r.Account).WithMany().HasForeignKey(r => r.AccountId).OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<Role>(entity =>
         {

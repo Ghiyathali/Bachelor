@@ -46,7 +46,7 @@ public record FilterOptionsResponse(
 
 [ApiController]
 [Route("api/dashboard")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class DashboardController(AppDbContext db) : ControllerBase
 {
     [HttpGet("overview")]

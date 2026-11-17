@@ -8,6 +8,7 @@ import { login } from '../api/auth'
 import { getSetupStatus } from '../api/setup'
 import FirstAdminSetup from '../components/FirstAdminSetup'
 import { getErrorMessage } from '../api/client'
+import ForgotPasswordForm from '../components/ForgotPasswordForm'
 import { useAuthStore } from '../stores/authStore'
 
 // Form rules (checked in the browser before anything is sent)
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const setSession = useAuthStore((state) => state.setSession)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [forgot, setForgot] = useState(false)
   // First start on a new database: no Admin yet, so show "Set up Pangaea" instead of the login form.
   // If the check fails (for example the server is down), the normal login form is shown.
   const setup = useQuery({ queryKey: ['setup-status'], queryFn: getSetupStatus, retry: false })
@@ -49,6 +51,7 @@ export default function LoginPage() {
   }
 
   if (setup.data?.needsFirstAdmin) return <FirstAdminSetup onAdminExists={() => void setup.refetch()} />
+  if (forgot) return <ForgotPasswordForm onBack={() => setForgot(false)} />
 
   return (
     <section className="mx-auto mt-4 max-w-md rounded-2xl border border-line bg-surface p-6 shadow-card sm:mt-12 sm:p-10">
@@ -82,6 +85,9 @@ export default function LoginPage() {
             className="mt-2 w-full rounded-md border border-line bg-surface px-3 py-2 text-ink"
           />
           {errors.password && <p className="mt-1 text-sm text-danger">{errors.password.message}</p>}
+          <button type="button" onClick={() => setForgot(true)} className="mt-2 text-sm font-medium text-brand-ink hover:underline">
+            Forgot password?
+          </button>
         </div>
 
         {serverError && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{serverError}</p>}

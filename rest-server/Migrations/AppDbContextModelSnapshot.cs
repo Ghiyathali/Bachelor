@@ -247,6 +247,32 @@ namespace RestServer.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestServer.Models.PasswordResetRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NewPasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.ToTable("PasswordResetRequests");
+                });
+
             modelBuilder.Entity("RestServer.Models.PynSyncRun", b =>
                 {
                     b.Property<int>("Id")
@@ -397,6 +423,17 @@ namespace RestServer.Migrations
                         .IsRequired();
 
                     b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("RestServer.Models.PasswordResetRequest", b =>
+                {
+                    b.HasOne("RestServer.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("RestServer.Models.Event", b =>

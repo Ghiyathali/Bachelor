@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { refreshSession } from './auth/session'
 import { Link, Outlet, useNavigate, useRouter } from '@tanstack/react-router'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, QR_CODE_ROLES, hasRole } from './auth/permissions'
+import { ACCOUNT_ADMIN_ROLES, ACCOUNT_MANAGER_ROLES, DASHBOARD_ROLES, EVENT_MANAGEMENT_ROLES, OWN_ACCOUNT_ONLY_ROLES, QR_CODE_ROLES, SYNC_ROLES, hasRole } from './auth/permissions'
 import { useAuthStore } from './stores/authStore'
 import pangaeaLogo from '../pangaea-logo.png'
+import NotificationBell from './components/NotificationBell'
 import SyncDatabaseButton from './components/SyncDatabaseButton'
 
 export default function App() {
@@ -69,11 +70,12 @@ export default function App() {
               {hasRole(user.role, DASHBOARD_ROLES) && <Link to="/dashboard" className="app-nav-link">Dashboard</Link>}
               {hasRole(user.role, EVENT_MANAGEMENT_ROLES) && <Link to="/events" className="app-nav-link">Events</Link>}
               {hasRole(user.role, QR_CODE_ROLES) && <Link to="/qr-code" className="app-nav-link">QR code</Link>}
-              {hasRole(user.role, ACCOUNT_ADMIN_ROLES) && <Link to="/accounts" className="app-nav-link">Manage accounts</Link>}
+              {hasRole(user.role, ACCOUNT_MANAGER_ROLES) && <Link to="/accounts" className="app-nav-link">Manage accounts</Link>}
+              {hasRole(user.role, OWN_ACCOUNT_ONLY_ROLES) && <Link to="/account" className="app-nav-link">My account</Link>}
               <Link to="/settings" className="app-nav-link">Settings</Link>
             </nav>
             <div className="app-sidebar-footer">
-              <SyncDatabaseButton />
+              {hasRole(user.role, SYNC_ROLES) && <SyncDatabaseButton />}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium" title={user.username}>{user.username}</p>
                 <p className="mt-1 text-xs text-muted">{user.role}</p>
@@ -84,7 +86,15 @@ export default function App() {
         )}
       </aside>
       <main className="app-main">
-        <div className="mx-auto w-full max-w-7xl"><Outlet /></div>
+        <div className="mx-auto w-full max-w-7xl">
+          {/* Admin only: the notification bell sits in the top right of every page. */}
+          {user && hasRole(user.role, ACCOUNT_ADMIN_ROLES) && (
+            <div className="mb-4 flex justify-end print:hidden">
+              <NotificationBell />
+            </div>
+          )}
+          <Outlet />
+        </div>
       </main>
     </div>
   )

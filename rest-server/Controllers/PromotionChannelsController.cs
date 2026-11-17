@@ -14,7 +14,7 @@ public record PromotionChannelsResponse(IReadOnlyList<ChannelCount> Channels);
 
 [ApiController]
 [Route("api/dashboard/channels")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class PromotionChannelsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

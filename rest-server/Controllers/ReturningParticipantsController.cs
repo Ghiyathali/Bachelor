@@ -18,7 +18,7 @@ public record ReturningParticipantsResponse(
 
 [ApiController]
 [Route("api/dashboard/returning")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class ReturningParticipantsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

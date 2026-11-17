@@ -8,7 +8,7 @@ import {
   getReturningParticipants,
   getTrends,
 } from '../api/dashboard'
-import { ACCOUNT_ADMIN_ROLES, DASHBOARD_ROLES, QR_CODE_ROLES, hasRole } from '../auth/permissions'
+import { ACCOUNT_MANAGER_ROLES, DASHBOARD_ROLES, OWN_ACCOUNT_ONLY_ROLES, QR_CODE_ROLES, hasRole } from '../auth/permissions'
 import Icon from '../components/Icon'
 import type { IconName } from '../components/Icon'
 import { useAuthStore } from '../stores/authStore'
@@ -20,7 +20,8 @@ import { useAuthStore } from '../stores/authStore'
 const QUICK_LINKS: { to: string; title: string; description: string; icon: IconName; roles: readonly string[] }[] = [
   { to: '/dashboard', title: 'Dashboard', description: 'Charts and reports', icon: 'chart', roles: DASHBOARD_ROLES },
   { to: '/qr-code', title: 'QR code', description: 'Feedback poster', icon: 'qrcode', roles: QR_CODE_ROLES },
-  { to: '/accounts', title: 'Accounts', description: 'Staff and roles', icon: 'users', roles: ACCOUNT_ADMIN_ROLES },
+  { to: '/accounts', title: 'Accounts', description: 'Staff and roles', icon: 'users', roles: ACCOUNT_MANAGER_ROLES },
+  { to: '/account', title: 'My account', description: 'Username, email, password', icon: 'users', roles: OWN_ACCOUNT_ONLY_ROLES },
 ]
 
 const DAY = 24 * 60 * 60 * 1000

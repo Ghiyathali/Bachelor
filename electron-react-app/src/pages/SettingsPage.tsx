@@ -11,7 +11,7 @@ export default function SettingsPage() {
   const setRememberFilters = useDashboardPreferencesStore(state => state.setRememberFilters)
 
   return (
-    <section className="max-w-2xl">
+    <section className="mx-auto max-w-2xl">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-ink">Preferences</p>
       <h1 className="mt-3 text-4xl font-bold tracking-tight text-ink">Settings</h1>
       <p className="mt-3 text-sm text-muted">Make your workspace feel right for you.</p>

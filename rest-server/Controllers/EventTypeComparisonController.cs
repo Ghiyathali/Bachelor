@@ -14,7 +14,7 @@ public record EventTypeComparisonResponse(IReadOnlyList<EventTypeComparison> Typ
 
 [ApiController]
 [Route("api/dashboard/event-types")]
-[Authorize(Roles = RoleNames.Analytics)]
+[Authorize(Roles = RoleNames.All)]
 public class EventTypeComparisonController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
