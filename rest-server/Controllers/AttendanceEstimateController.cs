@@ -8,7 +8,7 @@ using RestServer.Models;
 
 namespace RestServer.Controllers;
 
-// FR-14 / #82: estimated attendance for a planned event of a given type.
+// FR-17 / #82: estimated attendance for a planned event of a given type.
 public record AttendanceEstimateResponse(
     int EventTypeId,
     string EventTypeName,

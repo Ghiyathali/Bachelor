@@ -166,7 +166,7 @@ export async function getPromotionChannels(filters: DashboardFilters = {}): Prom
   return data
 }
 
-// FR-14: estimated attendance for a planned event. Mirrors AttendanceEstimateResponse in AttendanceEstimateController.cs.
+// FR-17: estimated attendance for a planned event. Mirrors AttendanceEstimateResponse in AttendanceEstimateController.cs.
 // average/estimate/low/high are null when there are fewer than 3 past events of the type.
 export interface AttendanceEstimate {
   eventTypeId: number

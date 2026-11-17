@@ -1,6 +1,6 @@
 namespace RestServer.Dashboard;
 
-// FR-14 / #82: estimated attendance for a planned event, from past events of the same type.
+// FR-17 / #82: estimated attendance for a planned event, from past events of the same type.
 // Level 1: the average of past events. Level 2: a simple linear regression over time.
 // No machine learning (project delimitation 1) - just least squares you can do by hand.
 public record PastEvent(DateTimeOffset StartsAt, int Accepted);
