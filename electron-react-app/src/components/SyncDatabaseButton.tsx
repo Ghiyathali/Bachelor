@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { getErrorMessage } from '../api/client'
 import { runPynSync } from '../api/sync'
-import { describeSyncRun } from '../api/syncSummary'
 import Icon from './Icon'
 
 // "Sync database" in the sidebar (Admin, Event Manager, Marketing Manager). Two steps:
@@ -17,7 +15,7 @@ export default function SyncDatabaseButton() {
   const queryClient = useQueryClient()
   const syncing = useRef(false)
   const [status, setStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
+  const [lastSynced, setLastSynced] = useState<string>()
 
   async function sync() {
     if (syncing.current) return
@@ -25,11 +23,9 @@ export default function SyncDatabaseButton() {
     setStatus('syncing')
     try {
       // Step 1: import from PYN's database.
-      let imported: string | null = null
       try {
         const run = await runPynSync()
-        if (!run.succeeded) throw new Error('The sync failed. Check the PYN database connection and try again.')
-        imported = describeSyncRun(run)
+        if (!run.succeeded) throw new Error('The PYN sync failed.')
       } catch (error) {
         if (!axios.isAxiosError(error) || error.response?.status !== 503) throw error
       }
@@ -37,14 +33,9 @@ export default function SyncDatabaseButton() {
       // Step 2: reload the open page. Throw on failure, so a partial refresh is never reported as done.
       await queryClient.invalidateQueries({ refetchType: 'active' }, { throwOnError: true })
 
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      setMessage(imported === null
-        ? `Data refreshed at ${time}. No PYN database is configured, so nothing was imported.`
-        : `Synced at ${time}. ${imported}`)
+      setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
       setStatus('success')
-    } catch (error) {
-      // Our own message for a failed run; the API's message otherwise (e.g. 409 "already running").
-      setMessage(error instanceof Error && !axios.isAxiosError(error) ? error.message : getErrorMessage(error))
+    } catch {
       setStatus('error')
     } finally {
       syncing.current = false
@@ -59,8 +50,10 @@ export default function SyncDatabaseButton() {
         <Icon name="refresh" className={`h-4 w-4 ${status === 'syncing' ? 'motion-safe:animate-spin' : ''}`} />
         {status === 'syncing' ? 'Syncing…' : 'Sync database'}
       </button>
-      <p role="status" aria-live="polite" className={`mt-2 text-xs ${status === 'error' ? 'text-danger' : 'text-muted'}`}>
-        {status === 'syncing' ? 'Importing new data from PYN…' : message}
+      <p role="status" aria-live="polite" className="mt-2 text-xs text-muted">
+        {status === 'syncing' && 'Refreshing data…'}
+        {status === 'success' && `Data refreshed at ${lastSynced}.`}
+        {status === 'error' && 'Could not refresh all data. Check your connection and try again.'}
       </p>
     </div>
   )
